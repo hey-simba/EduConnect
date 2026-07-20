@@ -21,6 +21,11 @@ mongoose.connect(process.env.MONGO_URI)
         console.error('❌ Database connection error:', err);
     });
 
+// --- NEW: Import and Connect Authentication Routes ---
+const authRoutes = require('./routes/auth');
+app.use('/api/auth', authRoutes);
+// -----------------------------------------------------
+
 // Basic Test Route
 app.get('/', (req, res) => {
     res.send('EduConnect Backend is running!');
