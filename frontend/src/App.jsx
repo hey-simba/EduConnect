@@ -1,16 +1,15 @@
-import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
-import SignIn from './pages/SignIn';
-import SignUp from './pages/SignUp';
+import { BrowserRouter, Routes, Route } from 'react-router-dom';
+import LandingPage from './pages/LandingPage';
 
 function App() {
   return (
     <BrowserRouter>
       <Routes>
-        {/* Redirect the base URL straight to Sign In */}
-        <Route path="/" element={<Navigate to="/signin" />} />
+        {/* Set the Landing Page as the main entry point */}
+        <Route path="/" element={<LandingPage />} />
         
-        <Route path="/signin" element={<SignIn />} />
-        <Route path="/signup" element={<SignUp />} />
+        {/* We can add the Dashboard route later here */}
+        {/* <Route path="/dashboard" element={<Dashboard />} /> */}
       </Routes>
     </BrowserRouter>
   );
