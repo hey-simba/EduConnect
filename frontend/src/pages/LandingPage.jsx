@@ -15,6 +15,7 @@ const LandingPage = () => {
   const [resetEmailSent, setResetEmailSent] = useState(false);
 
   // Input States
+  const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
@@ -56,6 +57,7 @@ const LandingPage = () => {
     setIsForgotPasswordView(false);
     setSuccessMessage('');
     setResetEmailSent(false);
+    setName('');
     setEmail('');
     setPassword('');
     setConfirmPassword('');
@@ -106,7 +108,7 @@ const LandingPage = () => {
       if (!allCriteriaMet || !passwordsMatch) return;
       
       try {
-        const result = await registerUser(email, password, role); // Calling the Service Layer
+        const result = await registerUser(name, email, password, role); // Calling the Service Layer
 
         if (!result.ok) {
           setEmailError(result.data.message || 'Failed to create account.');
@@ -214,7 +216,14 @@ const LandingPage = () => {
                 <form className="space-y-5" onSubmit={handleAuthSubmit}>
                   
                   {!isLoginView && !isForgotPasswordView && (
-                    <input type="text" placeholder="Full Name" required className="w-full px-5 py-4 rounded-xl text-lg bg-gray-50 dark:bg-[#1F2937] border border-gray-200 dark:border-gray-700 focus:ring-4 focus:ring-blue-500/20 dark:focus:ring-blue-500/30 focus:border-blue-500 dark:focus:border-blue-500 outline-none transition-all dark:text-white" />
+                    <input 
+                      type="text" 
+                      placeholder="Full Name" 
+                      required 
+                      value={name}
+                      onChange={(e) => setName(e.target.value)}
+                      className="w-full px-5 py-4 rounded-xl text-lg bg-gray-50 dark:bg-[#1F2937] border border-gray-200 dark:border-gray-700 focus:ring-4 focus:ring-blue-500/20 dark:focus:ring-blue-500/30 focus:border-blue-500 dark:focus:border-blue-500 outline-none transition-all dark:text-white" 
+                    />
                   )}
 
                   <div>

@@ -31,12 +31,12 @@ export const loginUser = async (email, password) => {
   }
 };
 
-export const registerUser = async (email, password, role) => {
+export const registerUser = async (name, email, password, role) => {
   try {
     const response = await fetch('http://localhost:5000/api/auth/register', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ email: email.toLowerCase(), password, role })
+      body: JSON.stringify({ name, email: email.toLowerCase(), password, role })
     });
     const data = await response.json();
     
