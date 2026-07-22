@@ -5,7 +5,7 @@ const User = require('../models/User'); // Imports the schema you just made
 const router = express.Router();
 
 // POST: Register a new user
-router.post('/signup', async (req, res) => {
+router.post(['/register', '/signup'], async (req, res) => {
     try {
         const { name, email, password } = req.body;
 
@@ -37,7 +37,7 @@ router.post('/signup', async (req, res) => {
 });
 
 // POST: Login a user
-router.post('/signin', async (req, res) => {
+router.post(['/signin', '/login'], async (req, res) => {
     try {
         const { email, password } = req.body;
 
