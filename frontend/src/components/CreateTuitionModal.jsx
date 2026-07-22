@@ -38,7 +38,7 @@ export default function CreateTuitionModal({ isOpen, onClose, onPostCreated }) {
 
             await createTuitionPost(newPost);
             
-            onPostCreated(); 
+            if (onPostCreated) onPostCreated(); 
             onClose();
         } catch (error) {
             console.error("Error creating post:", error);

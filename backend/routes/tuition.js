@@ -26,7 +26,9 @@ router.post('/', async (req, res) => {
             tutoringDays,
             subjects,
             salary,
-            status
+            status,
+            jobId,
+            studentName
         } = req.body;
 
         // Provide a dummy ObjectId if studentId is not supplied from frontend
@@ -42,7 +44,9 @@ router.post('/', async (req, res) => {
             tutoringDays,
             subjects,
             salary,
-            status
+            status,
+            jobId,
+            studentName
         });
 
         const savedPost = await newPost.save();

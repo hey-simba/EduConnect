@@ -1,6 +1,8 @@
 const mongoose = require('mongoose');
 
 const tuitionPostSchema = new mongoose.Schema({
+    jobId: { type: String, unique: true },
+    studentName: { type: String },
     studentId: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
     title: { type: String, required: true }, // e.g., "Tutor Needed For English Medium"
     location: { district: String, area: String, address: String },
