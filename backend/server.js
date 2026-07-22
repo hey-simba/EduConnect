@@ -21,9 +21,14 @@ mongoose.connect(process.env.MONGO_URI)
         console.error('❌ Database connection error:', err);
     });
 
-// --- NEW: Import and Connect Authentication Routes ---
+// --- Routes ---
 const authRoutes = require('./routes/auth');
 app.use('/api/auth', authRoutes);
+
+// ✅ FIXED: Added tuition routes so /api/tuitions responds correctly
+// Note: If your file is named differently (e.g. ./routes/tuitionRoutes), update the path inside require()
+const tuitionRoutes = require('./routes/tuition'); 
+app.use('/api/tuitions', tuitionRoutes);
 // -----------------------------------------------------
 
 // Basic Test Route

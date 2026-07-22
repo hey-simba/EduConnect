@@ -1,11 +1,13 @@
 import React from 'react';
-import PublicLayout from '../components/layouts/PublicLayout';
 
 const HomePage = () => {
   return (
-    <PublicLayout>
+    // ✅ Replaced the fragment with a div to restore your exact original background colors
+    <div className="bg-white dark:bg-[#010816] w-full min-h-screen transition-colors duration-300">
+      
       <section className="relative pt-24 pb-32 lg:pt-36 lg:pb-40 overflow-hidden">
         
+        {/* Grid Background Overlay */}
         <div className="absolute inset-0 w-full h-full bg-[linear-gradient(to_right,#80808020_1px,transparent_1px),linear-gradient(to_bottom,#80808020_1px,transparent_1px)] bg-[size:40px_40px] [mask-image:radial-gradient(ellipse_at_center,transparent_20%,black_100%)] pointer-events-none z-0"></div>
         <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[800px] h-[400px] bg-blue-600/20 dark:bg-blue-500/10 blur-[120px] rounded-full pointer-events-none z-0"></div>
 
@@ -67,7 +69,7 @@ const HomePage = () => {
         </div>
       </section>
       
-    </PublicLayout>
+    </div>
   );
 };
 
