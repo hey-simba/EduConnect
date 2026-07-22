@@ -1,65 +1,56 @@
 import React from 'react';
-import { Link } from 'react-router-dom'; // Assuming you are using react-router
+import { Link } from 'react-router-dom';
 
 const Footer = () => {
   return (
-    <footer className="bg-gray-50 dark:bg-[#010816] border-t border-gray-200 dark:border-gray-800/60 pt-16 pb-8 transition-colors duration-500 relative z-10 w-full">
-      <div className="max-w-7xl mx-auto px-6 lg:px-12">
-        
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-12 mb-16">
-          {/* Brand Column */}
-          <div className="md:col-span-1">
-            <h2 className="text-2xl font-extrabold tracking-tighter text-blue-600 dark:text-blue-500 mb-4">
-              EduConnect
-            </h2>
-            <p className="text-gray-500 dark:text-gray-400 text-sm leading-relaxed mb-6">
-              Bridging the gap between ambitious learners and industry experts. Master the skills of tomorrow, today.
+    <footer className="w-full bg-black border-t border-blue-900/50 text-gray-400 pt-12 pb-8">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-8 mb-8">
+          
+          {/* Brand & About */}
+          <div className="col-span-1 md:col-span-2">
+            <Link to="/home">
+              <h2 className="inline-block text-2xl font-extrabold tracking-wider text-transparent bg-clip-text bg-gradient-to-r from-blue-500 to-cyan-300 mb-4 drop-shadow-[0_0_8px_rgba(59,130,246,0.5)] hover:drop-shadow-[0_0_12px_rgba(34,211,238,0.8)] transition-all">
+                EduConnect
+              </h2>
+            </Link>
+            <p className="text-sm leading-relaxed max-w-md">
+              A premium, comprehensive learning management ecosystem designed to bridge the gap between students and expert instructors through an intuitive, data-driven platform.
             </p>
           </div>
 
-          {/* Dashboards Column */}
+          {/* Quick Links (Fixed Routing) */}
           <div>
-            <h3 className="font-bold text-gray-900 dark:text-white mb-4">Portals</h3>
-            <ul className="space-y-3 text-sm text-gray-500 dark:text-gray-400 font-medium">
-              <li><Link to="/student-dashboard" className="hover:text-blue-600 dark:hover:text-blue-400 transition-colors">Student Dashboard</Link></li>
-              <li><Link to="/instructor-dashboard" className="hover:text-blue-600 dark:hover:text-blue-400 transition-colors">Instructor Dashboard</Link></li>
-              <li><Link to="/admin" className="hover:text-blue-600 dark:hover:text-blue-400 transition-colors">Admin Portal</Link></li>
+            <h3 className="text-white font-semibold mb-4 tracking-wide uppercase text-sm">Platform</h3>
+            <ul className="space-y-2 text-sm">
+              <li><Link to="/home" className="hover:text-cyan-400 transition-colors">Home</Link></li>
+              <li><Link to="/courses" className="hover:text-cyan-400 transition-colors">Courses</Link></li>
+              <li><Link to="/live-classes" className="hover:text-cyan-400 transition-colors">Live Classes</Link></li>
+              <li><Link to="/tuition-hub" className="hover:text-cyan-400 transition-colors">Tuition Hub</Link></li>
             </ul>
           </div>
 
-          {/* Platform Column */}
+          {/* Support / Legal */}
           <div>
-            <h3 className="font-bold text-gray-900 dark:text-white mb-4">Platform</h3>
-            <ul className="space-y-3 text-sm text-gray-500 dark:text-gray-400 font-medium">
-              <li><a href="#" className="hover:text-blue-600 dark:hover:text-blue-400 transition-colors">Explore Courses</a></li>
-              <li><a href="#" className="hover:text-blue-600 dark:hover:text-blue-400 transition-colors">Become an Instructor</a></li>
-              <li><a href="#" className="hover:text-blue-600 dark:hover:text-blue-400 transition-colors">Pricing & Plans</a></li>
-            </ul>
-          </div>
-
-          {/* Legal Column */}
-          <div>
-            <h3 className="font-bold text-gray-900 dark:text-white mb-4">Legal</h3>
-            <ul className="space-y-3 text-sm text-gray-500 dark:text-gray-400 font-medium">
-              <li><a href="#" className="hover:text-blue-600 dark:hover:text-blue-400 transition-colors">Privacy Policy</a></li>
-              <li><a href="#" className="hover:text-blue-600 dark:hover:text-blue-400 transition-colors">Terms of Service</a></li>
-              <li><a href="#" className="hover:text-blue-600 dark:hover:text-blue-400 transition-colors">Code of Conduct</a></li>
+            <h3 className="text-white font-semibold mb-4 tracking-wide uppercase text-sm">Support</h3>
+            <ul className="space-y-2 text-sm">
+              <li><Link to="/contact" className="hover:text-cyan-400 transition-colors">Contact Us</Link></li>
+              <li><Link to="/faq" className="hover:text-cyan-400 transition-colors">FAQ</Link></li>
+              <li><Link to="/privacy" className="hover:text-cyan-400 transition-colors">Privacy Policy</Link></li>
+              <li><Link to="/terms" className="hover:text-cyan-400 transition-colors">Terms of Service</Link></li>
             </ul>
           </div>
         </div>
 
-        <div className="pt-8 border-t border-gray-200 dark:border-gray-800/60 flex flex-col md:flex-row justify-between items-center gap-4">
-          <p className="text-gray-400 dark:text-gray-500 text-sm font-medium">
-            © {new Date().getFullYear()} EduConnect Platform. All rights reserved.
-          </p>
-          <div className="flex gap-4">
-            {/* Social Icons Mockup */}
-            <div className="w-8 h-8 rounded-full bg-gray-200 dark:bg-gray-800 hover:bg-blue-100 dark:hover:bg-blue-900/50 cursor-pointer transition-colors"></div>
-            <div className="w-8 h-8 rounded-full bg-gray-200 dark:bg-gray-800 hover:bg-blue-100 dark:hover:bg-blue-900/50 cursor-pointer transition-colors"></div>
-            <div className="w-8 h-8 rounded-full bg-gray-200 dark:bg-gray-800 hover:bg-blue-100 dark:hover:bg-blue-900/50 cursor-pointer transition-colors"></div>
+        {/* Copyright Bar */}
+        <div className="border-t border-gray-800 pt-8 flex flex-col md:flex-row justify-between items-center text-xs">
+          <p>&copy; {new Date().getFullYear()} EduConnect. All rights reserved.</p>
+          <div className="flex space-x-4 mt-4 md:mt-0">
+            <span className="hover:text-cyan-400 cursor-pointer transition-colors">Facebook</span>
+            <span className="hover:text-cyan-400 cursor-pointer transition-colors">Twitter</span>
+            <span className="hover:text-cyan-400 cursor-pointer transition-colors">LinkedIn</span>
           </div>
         </div>
-
       </div>
     </footer>
   );

@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { loginUser, registerUser } from '../services/authService';
 
 const LandingPage = () => {
   const navigate = useNavigate();
@@ -64,7 +65,7 @@ const LandingPage = () => {
     setPasswordError('');
   };
 
-  // 🚀 THE FIX: Fully Updated Async Form Submission connecting to MongoDB Backend
+  // 🚀 CLEAN MVC SUBMISSION LOGIC
   const handleAuthSubmit = async (e) => {
     e.preventDefault();
     setEmailError('');
@@ -83,25 +84,18 @@ const LandingPage = () => {
     // --- Handling Login Submission ---
     if (isLoginView) {
       try {
-        const response = await fetch('http://localhost:5000/api/auth/login', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ email: email.toLowerCase(), password })
-        });
+        const result = await loginUser(email, password); // Calling the Service Layer
 
-        const data = await response.json();
-
-        if (!response.ok) {
-          if (response.status === 404) setEmailError('No account found with this email.');
-          else if (response.status === 401) setPasswordError('Incorrect password.');
-          else setEmailError(data.message || 'Login failed.');
+        if (!result.ok) {
+          if (result.status === 404) setEmailError('No account found with this email.');
+          else if (result.status === 401) setPasswordError('Incorrect password.');
+          else setEmailError(result.data.message || 'Login failed.');
           return;
         }
 
         // Redirect to the beautifully designed homepage on success!
         navigate('/home'); 
       } catch (error) {
-        console.error('Database connection error:', error);
         setEmailError('Could not connect to the server. Is your backend running?');
       }
       return;
@@ -112,16 +106,10 @@ const LandingPage = () => {
       if (!allCriteriaMet || !passwordsMatch) return;
       
       try {
-        const response = await fetch('http://localhost:5000/api/auth/register', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ email: email.toLowerCase(), password, role })
-        });
+        const result = await registerUser(email, password, role); // Calling the Service Layer
 
-        const data = await response.json();
-
-        if (!response.ok) {
-          setEmailError(data.message || 'Failed to create account.');
+        if (!result.ok) {
+          setEmailError(result.data.message || 'Failed to create account.');
           return;
         }
         
@@ -132,7 +120,6 @@ const LandingPage = () => {
         }
 
       } catch (error) {
-        console.error('Database connection error:', error);
         setEmailError('Could not connect to the server.');
       }
     }

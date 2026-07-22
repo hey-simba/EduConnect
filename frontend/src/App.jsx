@@ -1,15 +1,19 @@
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import LandingPage from './pages/LandingPage';
+import StudentDashboard from './pages/StudentDashboard';
+import HomePage from './pages/HomePage';
+import './App.css'; // Put your global CSS import here!
 
 function App() {
   return (
     <BrowserRouter>
       <Routes>
-        {/* Set the Landing Page as the main entry point */}
+        {/* Main entry point (Login/Signup) */}
         <Route path="/" element={<LandingPage />} />
         
-        {/* We can add the Dashboard route later here */}
-        {/* <Route path="/dashboard" element={<Dashboard />} /> */}
+        {/* Your newly activated routes! */}
+        <Route path="/home" element={<HomePage />} />
+        <Route path="/student-dashboard" element={<StudentDashboard />} />
       </Routes>
     </BrowserRouter>
   );
