@@ -8,8 +8,9 @@ import { fetchTuitionJobs } from "../services/tuitionService.js";
 import CreateTuitionModal from '../components/CreateTuitionModal';
 
 // NOTE: You will need to create these components next!
-// import BuyTokensModal from '../components/BuyTokensModal';
-// import ApplyTuitionModal from '../components/ApplyTuitionModal';
+import BuyTokensModal from '../components/BuyTokensModal';
+import ApplyTuitionModal from '../components/ApplyTuitionModal';
+import axios from 'axios';
 
 export default function TuitionHub() {
     const navigate = useNavigate();
@@ -20,8 +21,9 @@ export default function TuitionHub() {
         return saved ? JSON.parse(saved) : { id: '650000000000000000000001', name: 'Demo User', email: 'demo@educonnect.com', role: 'student' };
     });
 
-    const [tokens, setTokens] = useState(3);
+    const [tokens, setTokens] = useState(0);
     const [posts, setPosts] = useState([]);
+    const [appliedPosts, setAppliedPosts] = useState([]);
     const [loading, setLoading] = useState(true);
 
     // Filters state
@@ -38,7 +40,7 @@ export default function TuitionHub() {
 
     // ✅ REAL DATABASE FETCH VIA SERVICE (FIXED)
     useEffect(() => {
-        const loadPosts = async () => {
+        const loadData = async () => {
             try {
                 setLoading(true);
                 const response = await fetchTuitionJobs(); 
@@ -53,16 +55,33 @@ export default function TuitionHub() {
                 } else {
                     setPosts([]);
                 }
+
+                // Fetch applied posts if user is instructor
+                if (user.role === 'instructor') {
+                    // Fetch token balance
+                    const tokenRes = await axios.get(`http://localhost:5000/api/wallet/tokens/${user._id || user.id || '650000000000000000000002'}`);
+                    if (tokenRes.data.tokens !== undefined) {
+                        setTokens(tokenRes.data.tokens);
+                    }
+
+                    // Fetch applied posts
+                    const appRes = await axios.get(`http://localhost:5000/api/applications/my-applications?tutorId=${user._id || user.id || '650000000000000000000002'}`);
+                    setAppliedPosts(appRes.data);
+                }
             } catch (error) {
-                console.error("Failed to load posts:", error);
-                setPosts([]); // Fallback to prevent crash
+                console.error("Failed to load data:", error);
             } finally {
                 setLoading(false);
             }
         };
 
-        loadPosts();
-    }, []);
+        loadData();
+    }, [user.role, user.id]);
+
+    const handleApplicationSuccess = (postId) => {
+        setAppliedPosts([...appliedPosts, postId]);
+        setTokens(tokens - 1);
+    };
 
     // Filter Logic (FIXED: Safe Array Check)
     const safePosts = Array.isArray(posts) ? posts : [];
@@ -275,12 +294,27 @@ export default function TuitionHub() {
                                         </div>
 
                                         {user.role === 'instructor' ? (
-                                            <button 
-                                                onClick={() => setSelectedPostToApply(post)}
-                                                className="bg-purple-600 hover:bg-purple-700 text-white font-bold text-sm px-6 py-2.5 rounded-xl shadow-lg transition-all hover:scale-[1.02]"
-                                            >
-                                                Apply as Tutor
-                                            </button>
+                                            appliedPosts.includes(post._id) ? (
+                                                <button 
+                                                    disabled
+                                                    className="bg-gray-100 dark:bg-gray-800 text-gray-500 dark:text-gray-400 font-bold text-sm px-6 py-2.5 rounded-xl shadow-inner cursor-not-allowed border border-gray-200 dark:border-gray-700 flex items-center gap-2"
+                                                >
+                                                    <span className="text-green-500">✓</span> Already Applied
+                                                </button>
+                                            ) : (
+                                                <button 
+                                                    onClick={() => {
+                                                        if (tokens < 1) {
+                                                            setIsBuyTokensModalOpen(true);
+                                                        } else {
+                                                            setSelectedPostToApply(post);
+                                                        }
+                                                    }}
+                                                    className="bg-purple-600 hover:bg-purple-700 text-white font-bold text-sm px-6 py-2.5 rounded-xl shadow-lg transition-all hover:scale-[1.02]"
+                                                >
+                                                    Apply as Tutor
+                                                </button>
+                                            )
                                         ) : (
                                             <span className="text-xs font-bold text-gray-400 italic bg-gray-100 dark:bg-gray-800 px-3 py-1.5 rounded-lg">
                                                 Switch to Tutor to apply
@@ -296,10 +330,19 @@ export default function TuitionHub() {
 
             <CreateTuitionModal isOpen={isCreateModalOpen} onClose={() => setIsCreateModalOpen(false)} />
             
-            {/* 
-            <BuyTokensModal isOpen={isBuyTokensModalOpen} onClose={() => setIsBuyTokensModalOpen(false)} />
-            <ApplyTuitionModal isOpen={!!selectedPostToApply} onClose={() => setSelectedPostToApply(null)} post={selectedPostToApply} /> 
-            */}
+            <BuyTokensModal 
+                isOpen={isBuyTokensModalOpen} 
+                onClose={() => setIsBuyTokensModalOpen(false)} 
+                user={user}
+            />
+            <ApplyTuitionModal 
+                isOpen={!!selectedPostToApply} 
+                onClose={() => setSelectedPostToApply(null)} 
+                post={selectedPostToApply}
+                userTokens={tokens}
+                user={user}
+                onApplicationSuccess={handleApplicationSuccess}
+            />
 
         </div>
     );

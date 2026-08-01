@@ -29,6 +29,16 @@ app.use('/api/auth', authRoutes);
 // Note: If your file is named differently (e.g. ./routes/tuitionRoutes), update the path inside require()
 const tuitionRoutes = require('./routes/tuition'); 
 app.use('/api/tuitions', tuitionRoutes);
+
+// Application & Wallet Routes
+const applicationRoutes = require('./routes/application');
+const walletRoutes = require('./routes/wallet');
+app.use('/api/applications', applicationRoutes);
+app.use('/api/wallet', walletRoutes);
+
+// Serve uploads folder for CV files
+const path = require('path');
+app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 // -----------------------------------------------------
 
 // Basic Test Route

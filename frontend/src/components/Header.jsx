@@ -75,6 +75,23 @@ const Header = () => {
               )}
             </button>
             
+            {/* Notification Bell */}
+            <div className="relative">
+              <button 
+                onClick={() => setIsMobileMenuOpen(false)} // or toggle notification dropdown
+                className="text-gray-400 hover:text-cyan-300 transition-colors duration-300 focus:outline-none hidden sm:block relative"
+                title="Notifications"
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-6 h-6">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M14.857 17.082a23.848 23.848 0 005.454-1.31A8.967 8.967 0 0118 9.75v-.7V9A6 6 0 006 9v.75a8.967 8.967 0 01-2.312 6.022c1.733.64 3.56 1.085 5.455 1.31m5.714 0a24.255 24.255 0 01-5.714 0m5.714 0a3 3 0 11-5.714 0" />
+                </svg>
+                {/* Badge */}
+                <span className="absolute -top-1 -right-1 bg-red-500 text-white text-[10px] font-bold px-1.5 py-0.5 rounded-full border border-black">
+                  2
+                </span>
+              </button>
+            </div>
+
             {/* Profile Button */}
             <Link to="/dashboard" className="hidden sm:inline-flex bg-blue-600/20 border border-blue-500 text-cyan-300 hover:bg-blue-600 hover:text-white px-5 py-2 rounded-md text-sm font-bold transition-all duration-300 shadow-[0_0_10px_rgba(59,130,246,0.3)] hover:shadow-[0_0_20px_rgba(59,130,246,0.6)]">
               Profile
