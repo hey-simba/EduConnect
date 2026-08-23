@@ -30,51 +30,55 @@ export default function TuitionHub() {
     const [searchJobId, setSearchJobId] = useState('');
     const [tuitionType, setTuitionType] = useState('All');
     const [district, setDistrict] = useState('All');
+    const [area, setArea] = useState('');
+    const [subject, setSubject] = useState('');
     const [minSalary, setMinSalary] = useState('');
     const [maxSalary, setMaxSalary] = useState('');
+    const [sortBy, setSortBy] = useState('Newest');
 
     // Modals state
     const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
     const [isBuyTokensModalOpen, setIsBuyTokensModalOpen] = useState(false);
     const [selectedPostToApply, setSelectedPostToApply] = useState(null);
 
+    const loadData = async () => {
+        try {
+            setLoading(true);
+            const response = await fetchTuitionJobs(); 
+            
+            // Safely extract array regardless of response structure
+            if (Array.isArray(response)) {
+                setPosts(response);
+            } else if (response?.data && Array.isArray(response.data)) {
+                setPosts(response.data);
+            } else if (response?.jobs && Array.isArray(response.jobs)) {
+                setPosts(response.jobs);
+            } else {
+                setPosts([]);
+            }
+
+            // Fetch token balance if instructor or student
+            if (user.role === 'instructor' || user.role === 'student') {
+                const tokenRes = await axios.get(`http://localhost:5000/api/wallet/tokens/${user._id || user.id || '650000000000000000000002'}`);
+                if (tokenRes.data.tokens !== undefined) {
+                    setTokens(tokenRes.data.tokens);
+                }
+            }
+
+            // Fetch applied posts if user is instructor
+            if (user.role === 'instructor') {
+                const appRes = await axios.get(`http://localhost:5000/api/applications/my-applications?tutorId=${user._id || user.id || '650000000000000000000002'}`);
+                setAppliedPosts(appRes.data);
+            }
+        } catch (error) {
+            console.error("Failed to load data:", error);
+        } finally {
+            setLoading(false);
+        }
+    };
+
     // ✅ REAL DATABASE FETCH VIA SERVICE (FIXED)
     useEffect(() => {
-        const loadData = async () => {
-            try {
-                setLoading(true);
-                const response = await fetchTuitionJobs(); 
-                
-                // Safely extract array regardless of response structure
-                if (Array.isArray(response)) {
-                    setPosts(response);
-                } else if (response?.data && Array.isArray(response.data)) {
-                    setPosts(response.data);
-                } else if (response?.jobs && Array.isArray(response.jobs)) {
-                    setPosts(response.jobs);
-                } else {
-                    setPosts([]);
-                }
-
-                // Fetch applied posts if user is instructor
-                if (user.role === 'instructor') {
-                    // Fetch token balance
-                    const tokenRes = await axios.get(`http://localhost:5000/api/wallet/tokens/${user._id || user.id || '650000000000000000000002'}`);
-                    if (tokenRes.data.tokens !== undefined) {
-                        setTokens(tokenRes.data.tokens);
-                    }
-
-                    // Fetch applied posts
-                    const appRes = await axios.get(`http://localhost:5000/api/applications/my-applications?tutorId=${user._id || user.id || '650000000000000000000002'}`);
-                    setAppliedPosts(appRes.data);
-                }
-            } catch (error) {
-                console.error("Failed to load data:", error);
-            } finally {
-                setLoading(false);
-            }
-        };
-
         loadData();
     }, [user.role, user.id]);
 
@@ -89,21 +93,33 @@ export default function TuitionHub() {
     const filteredPosts = safePosts.filter(post => {
         const matchesJobId = searchJobId === '' || post.jobId?.toLowerCase().includes(searchJobId.toLowerCase());
         const matchesDistrict = district === 'All' || post.location?.district === district;
+        const matchesArea = area === '' || post.location?.area?.toLowerCase().includes(area.toLowerCase()) || post.location?.address?.toLowerCase().includes(area.toLowerCase());
+        const matchesSubject = subject === '' || post.subjects?.some(s => s.toLowerCase().includes(subject.toLowerCase())) || post.title?.toLowerCase().includes(subject.toLowerCase());
         const matchesMinSalary = minSalary === '' || (post.salary && post.salary >= parseInt(minSalary));
         const matchesMaxSalary = maxSalary === '' || (post.salary && post.salary <= parseInt(maxSalary));
         
-        // Note: If you add 'tuitionType' to your backend model later, uncomment this line:
-        // const matchesType = tuitionType === 'All' || post.tuitionType === tuitionType;
-        
-        return matchesJobId && matchesDistrict && matchesMinSalary && matchesMaxSalary;
+        return matchesJobId && matchesDistrict && matchesArea && matchesSubject && matchesMinSalary && matchesMaxSalary;
+    });
+
+    const sortedPosts = [...filteredPosts].sort((a, b) => {
+        if (sortBy === 'SalaryDesc') {
+            return b.salary - a.salary;
+        } else if (sortBy === 'SalaryAsc') {
+            return a.salary - b.salary;
+        } else {
+            return new Date(b.createdAt) - new Date(a.createdAt);
+        }
     });
 
     const resetFilters = () => {
         setSearchJobId('');
         setTuitionType('All');
         setDistrict('All');
+        setArea('');
+        setSubject('');
         setMinSalary('');
         setMaxSalary('');
+        setSortBy('Newest');
     };
 
     return (
@@ -136,7 +152,7 @@ export default function TuitionHub() {
                         </div>
 
                         {/* Token Wallet Badge */}
-                        {user.role === 'instructor' && (
+                        {(user.role === 'instructor' || user.role === 'student') && (
                             <div className="flex items-center gap-3 bg-amber-500/10 border border-amber-500/30 px-4 py-2 rounded-xl">
                                 <span className="text-amber-500 text-xl">🪙</span>
                                 <div>
@@ -186,6 +202,30 @@ export default function TuitionHub() {
                                         placeholder="Enter Job ID (e.g. TUT-123)"
                                         value={searchJobId}
                                         onChange={(e) => setSearchJobId(e.target.value)}
+                                        className="w-full px-3.5 py-2 rounded-xl bg-gray-50 dark:bg-[#1F2937] border border-gray-200 dark:border-gray-700 text-sm outline-none focus:border-blue-500"
+                                    />
+                                </div>
+
+                                {/* Search by Subject */}
+                                <div>
+                                    <label className="block text-xs font-bold uppercase text-gray-500 dark:text-gray-400 mb-1">Subject</label>
+                                    <input 
+                                        type="text" 
+                                        placeholder="e.g. Math, Physics"
+                                        value={subject}
+                                        onChange={(e) => setSubject(e.target.value)}
+                                        className="w-full px-3.5 py-2 rounded-xl bg-gray-50 dark:bg-[#1F2937] border border-gray-200 dark:border-gray-700 text-sm outline-none focus:border-blue-500"
+                                    />
+                                </div>
+
+                                {/* Search by Area */}
+                                <div>
+                                    <label className="block text-xs font-bold uppercase text-gray-500 dark:text-gray-400 mb-1">Area / Location</label>
+                                    <input 
+                                        type="text" 
+                                        placeholder="e.g. Dhanmondi, Gulshan"
+                                        value={area}
+                                        onChange={(e) => setArea(e.target.value)}
                                         className="w-full px-3.5 py-2 rounded-xl bg-gray-50 dark:bg-[#1F2937] border border-gray-200 dark:border-gray-700 text-sm outline-none focus:border-blue-500"
                                     />
                                 </div>
@@ -240,19 +280,31 @@ export default function TuitionHub() {
                     <section className="w-full lg:w-3/4 space-y-6">
                         <div className="flex justify-between items-center bg-white dark:bg-[#111827] px-6 py-4 rounded-2xl border border-gray-200 dark:border-gray-800 shadow-sm">
                             <div className="text-sm font-bold text-gray-600 dark:text-gray-400">
-                                Showing <span className="text-blue-600 dark:text-blue-400 font-extrabold">{filteredPosts.length}</span> tuition job listings
+                                Showing <span className="text-blue-600 dark:text-blue-400 font-extrabold">{sortedPosts.length}</span> tuition job listings
+                            </div>
+                            <div className="flex items-center gap-2">
+                                <label className="text-xs font-bold text-gray-500 uppercase">Sort By:</label>
+                                <select 
+                                    value={sortBy} 
+                                    onChange={(e) => setSortBy(e.target.value)}
+                                    className="px-3 py-1.5 rounded-xl bg-gray-50 dark:bg-[#1F2937] border border-gray-200 dark:border-gray-700 text-xs font-semibold outline-none cursor-pointer text-gray-700 dark:text-gray-300 focus:border-blue-500"
+                                >
+                                    <option value="Newest">Newest First</option>
+                                    <option value="SalaryDesc">Salary: High to Low</option>
+                                    <option value="SalaryAsc">Salary: Low to High</option>
+                                </select>
                             </div>
                         </div>
 
                         {loading ? (
                             <div className="text-center py-20 text-gray-500 font-medium animate-pulse">🔄 Loading tuition posts...</div>
-                        ) : filteredPosts.length === 0 ? (
+                        ) : sortedPosts.length === 0 ? (
                             <div className="bg-white dark:bg-[#111827] border border-gray-200 dark:border-gray-800 rounded-2xl p-12 text-center text-gray-500">
                                 <h4 className="text-xl font-bold">No Tuition Jobs Found</h4>
                                 <p className="text-sm mt-2">Try adjusting your filters to see more results.</p>
                             </div>
                         ) : (
-                            filteredPosts.map((post) => (
+                            sortedPosts.map((post) => (
                                 <div 
                                     key={post._id}
                                     className="bg-white dark:bg-[#111827] border border-gray-200 dark:border-gray-800 hover:border-blue-500/50 rounded-2xl p-6 shadow-md hover:shadow-xl transition-all duration-300 group"
@@ -328,7 +380,17 @@ export default function TuitionHub() {
                 </div>
             </main>
 
-            <CreateTuitionModal isOpen={isCreateModalOpen} onClose={() => setIsCreateModalOpen(false)} />
+            <CreateTuitionModal 
+                isOpen={isCreateModalOpen} 
+                onClose={() => setIsCreateModalOpen(false)} 
+                userTokens={tokens}
+                user={user}
+                onBuyTokensClick={() => {
+                    setIsCreateModalOpen(false);
+                    setIsBuyTokensModalOpen(true);
+                }}
+                onPostCreated={loadData}
+            />
             
             <BuyTokensModal 
                 isOpen={isBuyTokensModalOpen} 

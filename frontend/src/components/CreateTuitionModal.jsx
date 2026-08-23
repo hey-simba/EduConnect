@@ -1,16 +1,18 @@
 import React, { useState } from 'react';
 import { createTuitionPost } from "../services/tuitionService.js";
 
-export default function CreateTuitionModal({ isOpen, onClose, onPostCreated }) {
+export default function CreateTuitionModal({ isOpen, onClose, onPostCreated, userTokens, user, onBuyTokensClick }) {
     const [formData, setFormData] = useState({
         title: '',
         medium: 'Bangla Medium',
         classLevel: '',
         salary: '',
         district: 'Dhaka',
-        area: ''
+        area: '',
+        subjects: ''
     });
     const [isSubmitting, setIsSubmitting] = useState(false);
+    const [error, setError] = useState('');
 
     if (!isOpen) return null;
 
@@ -20,15 +22,25 @@ export default function CreateTuitionModal({ isOpen, onClose, onPostCreated }) {
 
     const handleSubmit = async (e) => {
         e.preventDefault();
+        
+        if (userTokens < 1) {
+            setError('Insufficient tokens. Please purchase tokens to post a tuition.');
+            return;
+        }
+
         setIsSubmitting(true);
+        setError('');
 
         try {
-            const user = JSON.parse(localStorage.getItem('user'));
+            const currentUser = user || JSON.parse(localStorage.getItem('user'));
+            const { subjects, ...restFormData } = formData;
 
             const newPost = {
-                ...formData,
+                ...restFormData,
                 salary: Number(formData.salary),
-                studentName: user?.name || 'Anonymous',
+                subjects: subjects.split(',').map(s => s.trim()).filter(Boolean),
+                studentName: currentUser?.name || 'Anonymous',
+                studentId: currentUser?._id || currentUser?.id || '650000000000000000000001',
                 location: {
                     district: formData.district,
                     area: formData.area
@@ -42,19 +54,44 @@ export default function CreateTuitionModal({ isOpen, onClose, onPostCreated }) {
             onClose();
         } catch (error) {
             console.error("Error creating post:", error);
-            alert("Failed to create post. Check console.");
+            setError(error.response?.data?.message || error.message || "Failed to create post.");
         } finally {
             setIsSubmitting(false);
         }
     };
 
     return (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm">
             <div className="bg-white dark:bg-[#111827] w-full max-w-lg p-6 rounded-2xl shadow-2xl border border-gray-200 dark:border-gray-800">
                 <div className="flex justify-between items-center mb-4">
                     <h2 className="text-xl font-extrabold text-gray-900 dark:text-white">Post Tutor Wanted</h2>
                     <button onClick={onClose} className="text-gray-500 hover:text-gray-900 dark:hover:text-white font-bold text-lg">✕</button>
                 </div>
+
+                <div className="mb-4 flex items-center gap-3 bg-amber-50 dark:bg-amber-900/10 p-3 rounded-xl border border-amber-200 dark:border-amber-700/30">
+                    <span className="text-amber-500 text-xl">🪙</span>
+                    <div>
+                        <div className="text-xs font-bold text-amber-800 dark:text-amber-400 uppercase">Token Cost</div>
+                        <div className="text-sm font-extrabold text-amber-900 dark:text-amber-300">
+                            Posting costs 1 Token. Your balance: {userTokens} {userTokens === 1 ? 'Token' : 'Tokens'}
+                        </div>
+                    </div>
+                </div>
+
+                {error && (
+                    <div className="mb-4 bg-red-50 dark:bg-red-900/10 text-red-600 dark:text-red-400 text-sm font-semibold p-3 rounded-xl border border-red-200 dark:border-red-800/30 flex justify-between items-center">
+                        <span>{error}</span>
+                        {userTokens < 1 && onBuyTokensClick && (
+                            <button
+                                type="button"
+                                onClick={onBuyTokensClick}
+                                className="bg-amber-500 hover:bg-amber-400 text-black text-xs font-extrabold px-3 py-1.5 rounded-lg transition-all"
+                            >
+                                Buy Tokens
+                            </button>
+                        )}
+                    </div>
+                )}
 
                 <form onSubmit={handleSubmit} className="space-y-4">
                     <div>
@@ -91,14 +128,19 @@ export default function CreateTuitionModal({ isOpen, onClose, onPostCreated }) {
                     </div>
 
                     <div>
+                        <label className="block text-xs font-bold text-gray-500 mb-1">Subjects (Comma separated)</label>
+                        <input required type="text" name="subjects" value={formData.subjects} onChange={handleChange} placeholder="e.g. Math, Chemistry, English" className="w-full px-3 py-2 border rounded-lg bg-gray-50 dark:bg-gray-800 dark:border-gray-700 text-gray-900 dark:text-gray-100 outline-none focus:border-blue-500" />
+                    </div>
+
+                    <div>
                         <label className="block text-xs font-bold text-gray-500 mb-1">Salary (Tk / Month)</label>
                         <input required type="number" name="salary" value={formData.salary} onChange={handleChange} placeholder="e.g. 5000" className="w-full px-3 py-2 border rounded-lg bg-gray-50 dark:bg-gray-800 dark:border-gray-700 text-gray-900 dark:text-gray-100 outline-none focus:border-blue-500" />
                     </div>
 
                     <button 
                         type="submit" 
-                        disabled={isSubmitting}
-                        className="w-full mt-4 bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 rounded-xl transition-all disabled:opacity-50"
+                        disabled={isSubmitting || userTokens < 1}
+                        className="w-full mt-4 bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 rounded-xl transition-all disabled:opacity-50 disabled:bg-gray-400"
                     >
                         {isSubmitting ? 'Posting...' : 'Post Tuition Job'}
                     </button>

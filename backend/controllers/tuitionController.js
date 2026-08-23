@@ -1,4 +1,6 @@
 const TuitionPost = require('../models/TuitionPost');
+const User = require('../models/User');
+const mongoose = require('mongoose');
 
 // GET /api/tuitions - Fetch all tuition job posts
 const getTuitions = async (req, res) => {
@@ -13,24 +15,40 @@ const getTuitions = async (req, res) => {
 
 // POST /api/tuitions - Create a new tuition job post
 const createTuition = async (req, res) => {
-    try {
-        const {
-            studentId,
-            title,
-            location,
-            medium,
-            classLevel,
-            preferredTutorGender,
-            tutoringDays,
-            subjects,
-            salary,
-            status,
-            jobId,
-            studentName
-        } = req.body;
+    const {
+        studentId,
+        title,
+        location,
+        medium,
+        classLevel,
+        preferredTutorGender,
+        tutoringDays,
+        subjects,
+        salary,
+        status,
+        jobId,
+        studentName
+    } = req.body;
 
-        // Provide a dummy ObjectId if studentId is not supplied from frontend
-        const fallbackStudentId = studentId || '650000000000000000000001';
+    const fallbackStudentId = studentId || '650000000000000000000001';
+
+    const session = await mongoose.startSession();
+    session.startTransaction();
+
+    try {
+        // Find the student
+        const student = await User.findById(fallbackStudentId).session(session);
+        if (!student) {
+            throw new Error('Student account not found');
+        }
+
+        if (student.tokens < 1) {
+            throw new Error('Insufficient tokens. Please buy more tokens to post a tuition.');
+        }
+
+        // Deduct 1 token
+        student.tokens -= 1;
+        await student.save({ session });
 
         const newPost = new TuitionPost({
             studentId: fallbackStudentId,
@@ -47,11 +65,17 @@ const createTuition = async (req, res) => {
             studentName
         });
 
-        const savedPost = await newPost.save();
+        const savedPost = await newPost.save({ session });
+
+        await session.commitTransaction();
+        session.endSession();
+
         res.status(201).json(savedPost);
     } catch (error) {
+        await session.abortTransaction();
+        session.endSession();
         console.error('Error creating tuition post:', error);
-        res.status(500).json({ message: 'Server error while creating tuition post', error: error.message });
+        res.status(400).json({ message: error.message || 'Server error while creating tuition post' });
     }
 };
 
