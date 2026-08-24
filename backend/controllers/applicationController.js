@@ -53,7 +53,7 @@ const applyForTuition = async (req, res) => {
         });
         await newApp.save({ session });
 
-        // Create notification for student
+        // Create persistent notification for student (stored in DB)
         const newNotification = new Notification({
             userId: post.studentId,
             type: 'NEW_APPLICANT',
@@ -64,6 +64,23 @@ const applyForTuition = async (req, res) => {
 
         await session.commitTransaction();
         session.endSession();
+
+        // FR-4 / NFR-3: Emit real-time socket event to the specific student (< 100ms)
+        // io and userSocketMap are attached to the Express app in server.js
+        const io = req.app.get('io');
+        const userSocketMap = req.app.get('userSocketMap');
+        const studentId = post.studentId.toString();
+        const targetSocketId = userSocketMap[studentId];
+
+        if (io && targetSocketId) {
+            io.to(targetSocketId).emit('NEW_APPLICANT', {
+                message: newNotification.message,
+                link: newNotification.link,
+                postTitle: post.title,
+                timestamp: new Date().toISOString()
+            });
+            console.log(`📡 Real-time notification sent to student ${studentId}`);
+        }
 
         res.status(201).json({ message: 'Application submitted successfully', application: newApp });
     } catch (error) {

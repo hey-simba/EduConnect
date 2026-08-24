@@ -92,19 +92,19 @@ const paymentSuccess = async (req, res) => {
             await newNotification.save();
         }
         // Redirect to frontend tuition hub
-        res.redirect('http://localhost:5173/tuitions?payment=success');
+        res.redirect('http://localhost:5173/tuition-hub?payment=success');
     } catch (error) {
         console.error(error);
-        res.redirect('http://localhost:5173/tuitions?payment=error');
+        res.redirect('http://localhost:5173/tuition-hub?payment=error');
     }
 };
 
 const paymentFail = async (req, res) => {
-    res.redirect('http://localhost:5173/tuitions?payment=fail');
+    res.redirect('http://localhost:5173/tuition-hub?payment=fail');
 };
 
 const paymentCancel = async (req, res) => {
-    res.redirect('http://localhost:5173/tuitions?payment=cancel');
+    res.redirect('http://localhost:5173/tuition-hub?payment=cancel');
 };
 
 module.exports = { getTokens, initPayment, paymentSuccess, paymentFail, paymentCancel };

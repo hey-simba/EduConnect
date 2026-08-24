@@ -3,9 +3,11 @@
 // Replace this with your actual backend base URL
 const API_BASE_URL = 'http://localhost:5000/api';
 
-export const fetchTuitionJobs = async () => {
+export const fetchTuitionJobs = async (params = {}) => {
     try {
-        const response = await fetch(`${API_BASE_URL}/tuitions`);
+        const queryString = new URLSearchParams(params).toString();
+        const url = `${API_BASE_URL}/tuitions${queryString ? `?${queryString}` : ''}`;
+        const response = await fetch(url);
         
         if (!response.ok) {
             throw new Error(`Error: ${response.status} - Failed to fetch data`);

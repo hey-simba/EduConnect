@@ -15,4 +15,9 @@ const tuitionPostSchema = new mongoose.Schema({
     status: { type: String, enum: ['Active', 'Closed'], default: 'Active' }
 }, { timestamps: true });
 
+// NFR-1: Performance Optimization Indexes
+tuitionPostSchema.index({ subjects: 1 });
+tuitionPostSchema.index({ salary: 1 });
+tuitionPostSchema.index({ 'location.area': 1 });
+
 module.exports = mongoose.model('TuitionPost', tuitionPostSchema);
