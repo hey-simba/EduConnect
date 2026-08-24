@@ -4,6 +4,10 @@ import StudentDashboard from './pages/StudentDashboard';
 import HomePage from './pages/HomePage';
 import TuitionHub from './pages/TuitionHub'; // <-- Tuition Hub
 import Courses from './pages/Courses'; // <-- Phase 3: Course Engine
+import CreateCourse from './pages/CreateCourse';
+import CourseDetails from './pages/CourseDetails';
+import InstructorDashboard from './pages/InstructorDashboard';
+import AdminDashboard from './pages/AdminDashboard';
 
 // Import your global Header and Footer (adjust the path if they are saved elsewhere!)
 import Header from './components/Header'; 
@@ -37,6 +41,10 @@ function App() {
           <Route path="/student-dashboard" element={<StudentDashboard />} /> 
           <Route path="/tuition-hub" element={<TuitionHub />} /> {/* <-- Tuition Hub Route */}
           <Route path="/courses" element={<Courses />} /> {/* <-- Phase 3: Course Engine */}
+          <Route path="/course/:courseId" element={<CourseDetails />} />
+          <Route path="/instructor/create-course" element={<CreateCourse />} />
+          <Route path="/instructor-dashboard" element={<InstructorDashboard />} />
+          <Route path="/admin-dashboard" element={<AdminDashboard />} />
         </Route>
       </Routes>
     </BrowserRouter>

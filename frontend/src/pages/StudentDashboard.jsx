@@ -42,7 +42,10 @@ const StudentDashboard = () => {
         </nav>
 
         <div className="p-4 border-t border-gray-200 dark:border-gray-800">
-          <button className="w-full flex items-center justify-center gap-2 px-4 py-3 rounded-xl font-bold text-red-600 bg-red-50 hover:bg-red-100 dark:bg-red-900/20 dark:hover:bg-red-900/40 transition-colors">
+          <button 
+            onClick={() => { localStorage.clear(); window.location.href = '/'; }}
+            className="w-full flex items-center justify-center gap-2 px-4 py-3 rounded-xl font-bold text-red-600 bg-red-50 hover:bg-red-100 dark:bg-red-900/20 dark:hover:bg-red-900/40 transition-colors"
+          >
             Log Out
           </button>
         </div>
@@ -52,7 +55,7 @@ const StudentDashboard = () => {
       <main className="flex-1 ml-64 p-8 lg:p-12">
         <header className="flex justify-between items-center mb-10">
           <div>
-            <h2 className="text-3xl font-bold tracking-tight">Welcome back, Student! 👋</h2>
+            <h2 className="text-3xl font-bold tracking-tight">Welcome back, {(() => { try { return JSON.parse(localStorage.getItem('user'))?.name || 'Student'; } catch { return 'Student'; } })()}! 👋</h2>
             <p className="text-gray-500 dark:text-gray-400 mt-1">Ready to continue your learning journey?</p>
           </div>
           <div className="w-12 h-12 rounded-full bg-blue-100 dark:bg-blue-900/50 border-2 border-blue-500 flex items-center justify-center text-xl shadow-sm">

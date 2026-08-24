@@ -10,7 +10,7 @@ const mongoose = require('mongoose');
 const getCourses = async (req, res) => {
     try {
         const { category, sortBy } = req.query;
-        let query = { isPublished: true };
+        let query = { isPublished: true, approvalStatus: 'Approved' };
 
         if (category && category !== 'All') {
             query.category = category;
@@ -54,7 +54,11 @@ const getCourseById = async (req, res) => {
 // ─────────────────────────────────────────────────────────
 const createCourse = async (req, res) => {
     try {
-        const { title, description, instructorId, instructorName, price, category, level, duration, totalLessons, thumbnail } = req.body;
+        const { 
+            title, description, instructorId, instructorName, price, 
+            category, level, thumbnail, playlistUrl, videos, 
+            totalDuration, totalAssignments, hasCertificate 
+        } = req.body;
 
         if (!title || !description || !instructorId || price === undefined) {
             return res.status(400).json({ message: 'Missing required fields' });
@@ -62,7 +66,10 @@ const createCourse = async (req, res) => {
 
         const course = new Course({
             title, description, instructorId, instructorName,
-            price, category, level, duration, totalLessons, thumbnail
+            price, category, level, thumbnail, 
+            playlistUrl, videos, totalDuration, totalAssignments, hasCertificate,
+            approvalStatus: 'Pending', // Force pending on creation
+            totalLessons: videos ? videos.length : 0
         });
         await course.save();
 

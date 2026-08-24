@@ -95,8 +95,15 @@ const LandingPage = () => {
           return;
         }
 
-        // Redirect to the beautifully designed homepage on success!
-        navigate('/home'); 
+        // Read the role from localStorage (set by authService) and route correctly
+        const loggedInUser = JSON.parse(localStorage.getItem('user'));
+        if (loggedInUser?.role === 'admin') {
+          navigate('/admin-dashboard');
+        } else if (loggedInUser?.role === 'instructor') {
+          navigate('/instructor-dashboard');
+        } else {
+          navigate('/student-dashboard');
+        }
       } catch (error) {
         setEmailError('Could not connect to the server. Is your backend running?');
       }

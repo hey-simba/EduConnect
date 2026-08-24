@@ -18,9 +18,28 @@ const courseSchema = new mongoose.Schema({
         enum: ['Beginner', 'Intermediate', 'Advanced'],
         default: 'Beginner'
     },
-    duration: { type: String, default: '' },        // e.g. "12 hours"
-    totalLessons: { type: Number, default: 0 },
-    // NFR-2: Aggregated rating fields — updated atomically on each new review
+    // 1. Video Content Management
+    playlistUrl: { type: String, default: '' },
+    videos: [{
+        title: { type: String, required: true },
+        youtubeUrl: { type: String, required: true },
+        isPreview: { type: Boolean, default: false }, // Free to watch?
+        duration: { type: String, default: '00:00' }
+    }],
+    
+    // 2. Course Highlights
+    totalDuration: { type: String, default: '0 hours' }, 
+    totalAssignments: { type: Number, default: 0 },
+    hasCertificate: { type: Boolean, default: true },
+    
+    // 3. Admin Verification Logic
+    approvalStatus: { 
+        type: String, 
+        enum: ['Pending', 'Approved', 'Rejected'], 
+        default: 'Pending' 
+    },
+    
+    // Original Stats
     averageRating: { type: Number, default: 0, min: 0, max: 5 },
     totalRatings: { type: Number, default: 0 },
     totalEnrollments: { type: Number, default: 0 },
