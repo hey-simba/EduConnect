@@ -19,11 +19,20 @@ export default function SignIn() {
       
       alert('Login successful!');
       
-      // If your backend sends a JWT token, you would save it like this:
-      // localStorage.setItem('token', response.data.token);
+      // Save user to localStorage
+      localStorage.setItem('user', JSON.stringify(response.data.user));
+      if (response.data.token) {
+        localStorage.setItem('token', response.data.token);
+      }
       
       // Navigate to a dashboard or homepage after successful login
-      // navigate('/dashboard'); 
+      if (response.data.user.role === 'admin') {
+        navigate('/admin-dashboard');
+      } else if (response.data.user.role === 'instructor') {
+        navigate('/instructor-dashboard');
+      } else {
+        navigate('/student-dashboard'); // Students go straight to their dashboard now
+      }
       
     } catch (error) {
       console.error(error);

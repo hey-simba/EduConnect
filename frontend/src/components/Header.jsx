@@ -227,8 +227,8 @@ const Header = () => {
             </div>
 
             {/* Profile Button */}
-            <Link to="/dashboard" className={`hidden sm:inline-flex px-5 py-2 rounded-md text-sm font-bold transition-all duration-300 ${isDarkMode ? 'bg-blue-600/20 border border-blue-500 text-cyan-300 hover:bg-blue-600 hover:text-white shadow-[0_0_10px_rgba(59,130,246,0.3)] hover:shadow-[0_0_20px_rgba(59,130,246,0.6)]' : 'bg-blue-50 border border-blue-200 text-blue-600 hover:bg-blue-600 hover:text-white shadow-sm hover:shadow-md'}`}>
-              Profile
+            <Link to={user?.role === 'admin' ? '/admin-dashboard' : user?.role === 'instructor' ? '/instructor-dashboard' : '/student-dashboard'} className={`hidden sm:inline-flex px-5 py-2 rounded-md text-sm font-bold transition-all duration-300 ${isDarkMode ? 'bg-blue-600/20 border border-blue-500 text-cyan-300 hover:bg-blue-600 hover:text-white shadow-[0_0_10px_rgba(59,130,246,0.3)] hover:shadow-[0_0_20px_rgba(59,130,246,0.6)]' : 'bg-blue-50 border border-blue-200 text-blue-600 hover:bg-blue-600 hover:text-white shadow-sm hover:shadow-md'}`}>
+              Dashboard
             </Link>
 
             {/* Mobile Menu Button (Hamburger) */}
@@ -257,8 +257,8 @@ const Header = () => {
           <NavLink to="/tuition-hub" onClick={toggleMobileMenu} className={getMobileNavClass}>Tuition Hub</NavLink>
           
           <div className={`border-t pt-4 mt-2 flex justify-between items-center px-3 ${isDarkMode ? 'border-gray-800' : 'border-gray-200'}`}>
-             <Link to="/dashboard" onClick={toggleMobileMenu} className={`px-4 py-2 rounded-md text-sm font-bold ${isDarkMode ? 'bg-blue-600/20 border border-blue-500 text-cyan-300' : 'bg-blue-50 border border-blue-200 text-blue-600'}`}>
-               Profile
+             <Link to={user?.role === 'admin' ? '/admin-dashboard' : user?.role === 'instructor' ? '/instructor-dashboard' : '/student-dashboard'} onClick={toggleMobileMenu} className={`px-4 py-2 rounded-md text-sm font-bold ${isDarkMode ? 'bg-blue-600/20 border border-blue-500 text-cyan-300' : 'bg-blue-50 border border-blue-200 text-blue-600'}`}>
+               Dashboard
              </Link>
              
              {/* Mobile Theme Toggle (Sun/Moon) */}
