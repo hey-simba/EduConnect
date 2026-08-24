@@ -1,7 +1,7 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { createTuitionPost } from "../services/tuitionService.js";
 
-export default function CreateTuitionModal({ isOpen, onClose, onPostCreated, userTokens, user, onBuyTokensClick }) {
+export default function CreateTuitionModal({ isOpen, onClose, onPostCreated, user }) {
     const [formData, setFormData] = useState({
         title: '',
         medium: 'Bangla Medium',
@@ -23,11 +23,6 @@ export default function CreateTuitionModal({ isOpen, onClose, onPostCreated, use
     const handleSubmit = async (e) => {
         e.preventDefault();
         
-        if (userTokens < 1) {
-            setError('Insufficient tokens. Please purchase tokens to post a tuition.');
-            return;
-        }
-
         setIsSubmitting(true);
         setError('');
 
@@ -68,28 +63,19 @@ export default function CreateTuitionModal({ isOpen, onClose, onPostCreated, use
                     <button onClick={onClose} className="text-gray-500 hover:text-gray-900 dark:hover:text-white font-bold text-lg">✕</button>
                 </div>
 
-                <div className="mb-4 flex items-center gap-3 bg-amber-50 dark:bg-amber-900/10 p-3 rounded-xl border border-amber-200 dark:border-amber-700/30">
-                    <span className="text-amber-500 text-xl">🪙</span>
+                <div className="mb-4 flex items-center gap-3 bg-blue-50 dark:bg-blue-900/10 p-3 rounded-xl border border-blue-200 dark:border-blue-700/30">
+                    <span className="text-blue-500 text-xl">📝</span>
                     <div>
-                        <div className="text-xs font-bold text-amber-800 dark:text-amber-400 uppercase">Token Cost</div>
-                        <div className="text-sm font-extrabold text-amber-900 dark:text-amber-300">
-                            Posting costs 1 Token. Your balance: {userTokens} {userTokens === 1 ? 'Token' : 'Tokens'}
+                        <div className="text-xs font-bold text-blue-800 dark:text-blue-400 uppercase">Posting is Free</div>
+                        <div className="text-sm font-extrabold text-blue-900 dark:text-blue-300">
+                            Students can post tuition requests without tokens.
                         </div>
                     </div>
                 </div>
 
                 {error && (
-                    <div className="mb-4 bg-red-50 dark:bg-red-900/10 text-red-600 dark:text-red-400 text-sm font-semibold p-3 rounded-xl border border-red-200 dark:border-red-800/30 flex justify-between items-center">
+                    <div className="mb-4 bg-red-50 dark:bg-red-900/10 text-red-600 dark:text-red-400 text-sm font-semibold p-3 rounded-xl border border-red-200 dark:border-red-800/30">
                         <span>{error}</span>
-                        {userTokens < 1 && onBuyTokensClick && (
-                            <button
-                                type="button"
-                                onClick={onBuyTokensClick}
-                                className="bg-amber-500 hover:bg-amber-400 text-black text-xs font-extrabold px-3 py-1.5 rounded-lg transition-all"
-                            >
-                                Buy Tokens
-                            </button>
-                        )}
                     </div>
                 )}
 
@@ -105,6 +91,8 @@ export default function CreateTuitionModal({ isOpen, onClose, onPostCreated, use
                             <select name="medium" value={formData.medium} onChange={handleChange} className="w-full px-3 py-2 border rounded-lg bg-gray-50 dark:bg-gray-800 dark:border-gray-700 text-gray-900 dark:text-gray-100 outline-none focus:border-blue-500">
                                 <option>Bangla Medium</option>
                                 <option>English Medium</option>
+                                <option>University Level</option>
+                                <option>Madrasah</option>
                             </select>
                         </div>
                         <div>
@@ -118,7 +106,69 @@ export default function CreateTuitionModal({ isOpen, onClose, onPostCreated, use
                             <label className="block text-xs font-bold text-gray-500 mb-1">District</label>
                             <select name="district" value={formData.district} onChange={handleChange} className="w-full px-3 py-2 border rounded-lg bg-gray-50 dark:bg-gray-800 dark:border-gray-700 text-gray-900 dark:text-gray-100 outline-none focus:border-blue-500">
                                 <option>Dhaka</option>
+                                <option>Faridpur</option>
+                                <option>Gazipur</option>
+                                <option>Gopalganj</option>
+                                <option>Jamalpur</option>
+                                <option>Kishoreganj</option>
+                                <option>Madaripur</option>
+                                <option>Manikganj</option>
+                                <option>Munshiganj</option>
+                                <option>Mymensingh</option>
+                                <option>Narayanganj</option>
+                                <option>Narsingdi</option>
+                                <option>Netrakona</option>
+                                <option>Rajbari</option>
+                                <option>Shariatpur</option>
+                                <option>Sherpur</option>
+                                <option>Tangail</option>
+                                <option>Bogura</option>
+                                <option>Joypurhat</option>
+                                <option>Naogaon</option>
+                                <option>Natore</option>
+                                <option>Chapainawabganj</option>
+                                <option>Pabna</option>
+                                <option>Rajshahi</option>
+                                <option>Sirajganj</option>
+                                <option>Dinajpur</option>
+                                <option>Gaibandha</option>
+                                <option>Kurigram</option>
+                                <option>Lalmonirhat</option>
+                                <option>Nilphamari</option>
+                                <option>Panchagarh</option>
+                                <option>Rangpur</option>
+                                <option>Thakurgaon</option>
+                                <option>Barguna</option>
+                                <option>Barisal</option>
+                                <option>Bhola</option>
+                                <option>Jhalokathi</option>
+                                <option>Patuakhali</option>
+                                <option>Pirojpur</option>
+                                <option>Bandarban</option>
+                                <option>Brahmanbaria</option>
+                                <option>Chandpur</option>
                                 <option>Chattogram</option>
+                                <option>Comilla</option>
+                                <option>Cox's Bazar</option>
+                                <option>Feni</option>
+                                <option>Khagrachhari</option>
+                                <option>Lakshmipur</option>
+                                <option>Noakhali</option>
+                                <option>Rangamati</option>
+                                <option>Habiganj</option>
+                                <option>Moulvibazar</option>
+                                <option>Sunamganj</option>
+                                <option>Sylhet</option>
+                                <option>Bagerhat</option>
+                                <option>Chuadanga</option>
+                                <option>Jessore</option>
+                                <option>Jhenaidah</option>
+                                <option>Khulna</option>
+                                <option>Kushtia</option>
+                                <option>Magura</option>
+                                <option>Meherpur</option>
+                                <option>Narail</option>
+                                <option>Satkhira</option>
                             </select>
                         </div>
                         <div>
@@ -139,7 +189,7 @@ export default function CreateTuitionModal({ isOpen, onClose, onPostCreated, use
 
                     <button 
                         type="submit" 
-                        disabled={isSubmitting || userTokens < 1}
+                        disabled={isSubmitting}
                         className="w-full mt-4 bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 rounded-xl transition-all disabled:opacity-50 disabled:bg-gray-400"
                     >
                         {isSubmitting ? 'Posting...' : 'Post Tuition Job'}

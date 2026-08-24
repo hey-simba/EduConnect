@@ -5,7 +5,35 @@ const mongoose = require('mongoose');
 // GET /api/tuitions - Fetch all tuition job posts
 const getTuitions = async (req, res) => {
     try {
-        const posts = await TuitionPost.find().sort({ createdAt: -1 });
+        const { subject, area, minSalary, maxSalary, sortBy } = req.query;
+        let query = {};
+
+        // Filter by subject
+        if (subject && subject !== 'All') {
+            query.subjects = { $in: [subject] };
+        }
+
+        // Filter by location area
+        if (area && area !== 'All') {
+            query['location.area'] = area;
+        }
+
+        // Filter by salary range
+        if (minSalary || maxSalary) {
+            query.salary = {};
+            if (minSalary) query.salary.$gte = Number(minSalary);
+            if (maxSalary) query.salary.$lte = Number(maxSalary);
+        }
+
+        // Determine sort order
+        let sortOption = { createdAt: -1 }; // Default: newest
+        if (sortBy === 'salary-high') {
+            sortOption = { salary: -1 };
+        } else if (sortBy === 'salary-low') {
+            sortOption = { salary: 1 };
+        }
+
+        const posts = await TuitionPost.find(query).sort(sortOption);
         res.status(200).json(posts);
     } catch (error) {
         console.error('Error fetching tuition posts:', error);
@@ -41,14 +69,6 @@ const createTuition = async (req, res) => {
         if (!student) {
             throw new Error('Student account not found');
         }
-
-        if (student.tokens < 1) {
-            throw new Error('Insufficient tokens. Please buy more tokens to post a tuition.');
-        }
-
-        // Deduct 1 token
-        student.tokens -= 1;
-        await student.save({ session });
 
         const newPost = new TuitionPost({
             studentId: fallbackStudentId,

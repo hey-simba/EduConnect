@@ -1,5 +1,4 @@
-import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useState, useEffect } from 'react';
 
 // ✅ Imported the service (Model)
 import { fetchTuitionJobs } from "../services/tuitionService.js";
@@ -13,8 +12,6 @@ import ApplyTuitionModal from '../components/ApplyTuitionModal';
 import axios from 'axios';
 
 export default function TuitionHub() {
-    const navigate = useNavigate();
-
     // Mock authenticated user state
     const [user, setUser] = useState(() => {
         const saved = localStorage.getItem('user');
@@ -41,10 +38,24 @@ export default function TuitionHub() {
     const [isBuyTokensModalOpen, setIsBuyTokensModalOpen] = useState(false);
     const [selectedPostToApply, setSelectedPostToApply] = useState(null);
 
-    const loadData = async () => {
+    // NFR-1: Backend-driven filtering — passes active filters as query params
+    // so MongoDB uses indexes instead of filtering in JS on the client.
+    const loadData = async (filters = {}) => {
         try {
             setLoading(true);
-            const response = await fetchTuitionJobs(); 
+
+            // Build params object; omit empty / "All" values so URL stays clean
+            const params = {};
+            if (filters.subject && filters.subject !== '') params.subject = filters.subject;
+            if (filters.area && filters.area !== '')       params.area    = filters.area;
+            if (filters.minSalary && filters.minSalary !== '') params.minSalary = filters.minSalary;
+            if (filters.maxSalary && filters.maxSalary !== '') params.maxSalary = filters.maxSalary;
+            if (filters.sortBy) {
+                if (filters.sortBy === 'SalaryDesc') params.sortBy = 'salary-high';
+                else if (filters.sortBy === 'SalaryAsc') params.sortBy = 'salary-low';
+            }
+
+            const response = await fetchTuitionJobs(params);
             
             // Safely extract array regardless of response structure
             if (Array.isArray(response)) {
@@ -57,12 +68,14 @@ export default function TuitionHub() {
                 setPosts([]);
             }
 
-            // Fetch token balance if instructor or student
-            if (user.role === 'instructor' || user.role === 'student') {
+            // Fetch token balance only for instructors (tokens are tutor-only)
+            if (user.role === 'instructor') {
                 const tokenRes = await axios.get(`http://localhost:5000/api/wallet/tokens/${user._id || user.id || '650000000000000000000002'}`);
                 if (tokenRes.data.tokens !== undefined) {
                     setTokens(tokenRes.data.tokens);
                 }
+            } else {
+                setTokens(0);
             }
 
             // Fetch applied posts if user is instructor
@@ -77,38 +90,29 @@ export default function TuitionHub() {
         }
     };
 
-    // ✅ REAL DATABASE FETCH VIA SERVICE (FIXED)
+    // NFR-1: Initial load + re-fetch whenever role/user or filters change
     useEffect(() => {
-        loadData();
-    }, [user.role, user.id]);
+        loadData({ subject, area, minSalary, maxSalary, sortBy });
+    }, [user.role, user.id, subject, area, minSalary, maxSalary, sortBy]);
 
-    const handleApplicationSuccess = (postId) => {
-        setAppliedPosts([...appliedPosts, postId]);
-        setTokens(tokens - 1);
+    // Apply backend filters — re-fetches from MongoDB using indexes
+    const applyFilters = () => {
+        loadData({ subject, area, minSalary, maxSalary, sortBy });
     };
 
-    // Filter Logic (FIXED: Safe Array Check)
+    const handleApplicationSuccess = (postId) => {
+        setAppliedPosts(prev => [...prev, postId]);
+        setTokens(prev => Math.max(0, prev - 1));
+    };
+
+    // Client-side filters for fields that don't go to backend
+    // (jobId & district are light-weight client filters; heavy ones go to MongoDB)
     const safePosts = Array.isArray(posts) ? posts : [];
     
-    const filteredPosts = safePosts.filter(post => {
+    const displayedPosts = safePosts.filter(post => {
         const matchesJobId = searchJobId === '' || post.jobId?.toLowerCase().includes(searchJobId.toLowerCase());
         const matchesDistrict = district === 'All' || post.location?.district === district;
-        const matchesArea = area === '' || post.location?.area?.toLowerCase().includes(area.toLowerCase()) || post.location?.address?.toLowerCase().includes(area.toLowerCase());
-        const matchesSubject = subject === '' || post.subjects?.some(s => s.toLowerCase().includes(subject.toLowerCase())) || post.title?.toLowerCase().includes(subject.toLowerCase());
-        const matchesMinSalary = minSalary === '' || (post.salary && post.salary >= parseInt(minSalary));
-        const matchesMaxSalary = maxSalary === '' || (post.salary && post.salary <= parseInt(maxSalary));
-        
-        return matchesJobId && matchesDistrict && matchesArea && matchesSubject && matchesMinSalary && matchesMaxSalary;
-    });
-
-    const sortedPosts = [...filteredPosts].sort((a, b) => {
-        if (sortBy === 'SalaryDesc') {
-            return b.salary - a.salary;
-        } else if (sortBy === 'SalaryAsc') {
-            return a.salary - b.salary;
-        } else {
-            return new Date(b.createdAt) - new Date(a.createdAt);
-        }
+        return matchesJobId && matchesDistrict;
     });
 
     const resetFilters = () => {
@@ -120,6 +124,8 @@ export default function TuitionHub() {
         setMinSalary('');
         setMaxSalary('');
         setSortBy('Newest');
+        // Re-fetch with no filters
+        loadData({});
     };
 
     return (
@@ -151,21 +157,21 @@ export default function TuitionHub() {
                             </button>
                         </div>
 
-                        {/* Token Wallet Badge */}
-                        {(user.role === 'instructor' || user.role === 'student') && (
-                            <div className="flex items-center gap-3 bg-amber-500/10 border border-amber-500/30 px-4 py-2 rounded-xl">
+                        {/* Token Wallet Badge — Tutors only */}
+                        {user.role === 'instructor' && (
+                            <button 
+                                onClick={() => setIsBuyTokensModalOpen(true)} 
+                                className="flex items-center gap-3 bg-amber-500/10 border border-amber-500/30 px-4 py-2 rounded-xl hover:bg-amber-500/20 transition-colors"
+                            >
                                 <span className="text-amber-500 text-xl">🪙</span>
-                                <div>
+                                <div className="text-left">
                                     <div className="text-[10px] uppercase font-bold text-gray-500 dark:text-gray-400">Tokens</div>
                                     <div className="text-sm font-extrabold text-amber-600 dark:text-amber-400">{tokens} Balance</div>
                                 </div>
-                                <button 
-                                    onClick={() => setIsBuyTokensModalOpen(true)} 
-                                    className="ml-2 text-xs font-extrabold bg-amber-500 hover:bg-amber-400 text-black px-3 py-1.5 rounded-lg transition-all shadow-sm"
-                                >
+                                <span className="ml-2 text-xs font-extrabold bg-amber-500 hover:bg-amber-400 text-black px-3 py-1.5 rounded-lg transition-all shadow-sm">
                                     + Buy
-                                </button>
-                            </div>
+                                </span>
+                            </button>
                         )}
 
                         {/* Post Tuition Button */}
@@ -254,7 +260,69 @@ export default function TuitionHub() {
                                     >
                                         <option value="All">All Districts</option>
                                         <option value="Dhaka">Dhaka</option>
+                                        <option value="Faridpur">Faridpur</option>
+                                        <option value="Gazipur">Gazipur</option>
+                                        <option value="Gopalganj">Gopalganj</option>
+                                        <option value="Jamalpur">Jamalpur</option>
+                                        <option value="Kishoreganj">Kishoreganj</option>
+                                        <option value="Madaripur">Madaripur</option>
+                                        <option value="Manikganj">Manikganj</option>
+                                        <option value="Munshiganj">Munshiganj</option>
+                                        <option value="Mymensingh">Mymensingh</option>
+                                        <option value="Narayanganj">Narayanganj</option>
+                                        <option value="Narsingdi">Narsingdi</option>
+                                        <option value="Netrakona">Netrakona</option>
+                                        <option value="Rajbari">Rajbari</option>
+                                        <option value="Shariatpur">Shariatpur</option>
+                                        <option value="Sherpur">Sherpur</option>
+                                        <option value="Tangail">Tangail</option>
+                                        <option value="Bogura">Bogura</option>
+                                        <option value="Joypurhat">Joypurhat</option>
+                                        <option value="Naogaon">Naogaon</option>
+                                        <option value="Natore">Natore</option>
+                                        <option value="Chapainawabganj">Chapainawabganj</option>
+                                        <option value="Pabna">Pabna</option>
+                                        <option value="Rajshahi">Rajshahi</option>
+                                        <option value="Sirajganj">Sirajganj</option>
+                                        <option value="Dinajpur">Dinajpur</option>
+                                        <option value="Gaibandha">Gaibandha</option>
+                                        <option value="Kurigram">Kurigram</option>
+                                        <option value="Lalmonirhat">Lalmonirhat</option>
+                                        <option value="Nilphamari">Nilphamari</option>
+                                        <option value="Panchagarh">Panchagarh</option>
+                                        <option value="Rangpur">Rangpur</option>
+                                        <option value="Thakurgaon">Thakurgaon</option>
+                                        <option value="Barguna">Barguna</option>
+                                        <option value="Barisal">Barisal</option>
+                                        <option value="Bhola">Bhola</option>
+                                        <option value="Jhalokathi">Jhalokathi</option>
+                                        <option value="Patuakhali">Patuakhali</option>
+                                        <option value="Pirojpur">Pirojpur</option>
+                                        <option value="Bandarban">Bandarban</option>
+                                        <option value="Brahmanbaria">Brahmanbaria</option>
+                                        <option value="Chandpur">Chandpur</option>
                                         <option value="Chattogram">Chattogram</option>
+                                        <option value="Comilla">Comilla</option>
+                                        <option value="Cox's Bazar">Cox's Bazar</option>
+                                        <option value="Feni">Feni</option>
+                                        <option value="Khagrachhari">Khagrachhari</option>
+                                        <option value="Lakshmipur">Lakshmipur</option>
+                                        <option value="Noakhali">Noakhali</option>
+                                        <option value="Rangamati">Rangamati</option>
+                                        <option value="Habiganj">Habiganj</option>
+                                        <option value="Moulvibazar">Moulvibazar</option>
+                                        <option value="Sunamganj">Sunamganj</option>
+                                        <option value="Sylhet">Sylhet</option>
+                                        <option value="Bagerhat">Bagerhat</option>
+                                        <option value="Chuadanga">Chuadanga</option>
+                                        <option value="Jessore">Jessore</option>
+                                        <option value="Jhenaidah">Jhenaidah</option>
+                                        <option value="Khulna">Khulna</option>
+                                        <option value="Kushtia">Kushtia</option>
+                                        <option value="Magura">Magura</option>
+                                        <option value="Meherpur">Meherpur</option>
+                                        <option value="Narail">Narail</option>
+                                        <option value="Satkhira">Satkhira</option>
                                     </select>
                                 </div>
 
@@ -272,6 +340,14 @@ export default function TuitionHub() {
                                         />
                                     </div>
                                 </div>
+
+                                {/* Apply Filters — triggers backend query with indexed fields */}
+                                <button
+                                    onClick={applyFilters}
+                                    className="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold text-sm py-2.5 rounded-xl shadow transition-all hover:scale-[1.01] flex items-center justify-center gap-2"
+                                >
+                                    🔍 Apply Filters
+                                </button>
                             </div>
                         </div>
                     </aside>
@@ -280,7 +356,7 @@ export default function TuitionHub() {
                     <section className="w-full lg:w-3/4 space-y-6">
                         <div className="flex justify-between items-center bg-white dark:bg-[#111827] px-6 py-4 rounded-2xl border border-gray-200 dark:border-gray-800 shadow-sm">
                             <div className="text-sm font-bold text-gray-600 dark:text-gray-400">
-                                Showing <span className="text-blue-600 dark:text-blue-400 font-extrabold">{sortedPosts.length}</span> tuition job listings
+                                Showing <span className="text-blue-600 dark:text-blue-400 font-extrabold">{displayedPosts.length}</span> tuition job listings
                             </div>
                             <div className="flex items-center gap-2">
                                 <label className="text-xs font-bold text-gray-500 uppercase">Sort By:</label>
@@ -298,13 +374,13 @@ export default function TuitionHub() {
 
                         {loading ? (
                             <div className="text-center py-20 text-gray-500 font-medium animate-pulse">🔄 Loading tuition posts...</div>
-                        ) : sortedPosts.length === 0 ? (
+                        ) : displayedPosts.length === 0 ? (
                             <div className="bg-white dark:bg-[#111827] border border-gray-200 dark:border-gray-800 rounded-2xl p-12 text-center text-gray-500">
                                 <h4 className="text-xl font-bold">No Tuition Jobs Found</h4>
                                 <p className="text-sm mt-2">Try adjusting your filters to see more results.</p>
                             </div>
                         ) : (
-                            sortedPosts.map((post) => (
+                            displayedPosts.map((post) => (
                                 <div 
                                     key={post._id}
                                     className="bg-white dark:bg-[#111827] border border-gray-200 dark:border-gray-800 hover:border-blue-500/50 rounded-2xl p-6 shadow-md hover:shadow-xl transition-all duration-300 group"

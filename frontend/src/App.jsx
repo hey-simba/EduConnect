@@ -2,7 +2,8 @@ import { BrowserRouter, Routes, Route, Outlet } from 'react-router-dom';
 import LandingPage from './pages/LandingPage';
 import StudentDashboard from './pages/StudentDashboard';
 import HomePage from './pages/HomePage';
-import TuitionHub from './pages/TuitionHub'; // <-- NEW: Imported Tuition Hub
+import TuitionHub from './pages/TuitionHub'; // <-- Tuition Hub
+import Courses from './pages/Courses'; // <-- Phase 3: Course Engine
 
 // Import your global Header and Footer (adjust the path if they are saved elsewhere!)
 import Header from './components/Header'; 
@@ -34,7 +35,8 @@ function App() {
         <Route element={<MainLayout />}>
           <Route path="/home" element={<HomePage />} />
           <Route path="/student-dashboard" element={<StudentDashboard />} /> 
-          <Route path="/tuition-hub" element={<TuitionHub />} /> {/* <-- NEW: Tuition Hub Route */}
+          <Route path="/tuition-hub" element={<TuitionHub />} /> {/* <-- Tuition Hub Route */}
+          <Route path="/courses" element={<Courses />} /> {/* <-- Phase 3: Course Engine */}
         </Route>
       </Routes>
     </BrowserRouter>

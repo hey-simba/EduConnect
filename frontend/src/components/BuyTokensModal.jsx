@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import axios from 'axios';
 
 export default function BuyTokensModal({ isOpen, onClose, user }) {
@@ -25,8 +25,8 @@ export default function BuyTokensModal({ isOpen, onClose, user }) {
             });
 
             if (res.data.paymentUrl) {
-                // Redirect to SSLCommerz gateway
-                window.location.href = res.data.paymentUrl;
+                setLoading(false);
+                window.open(res.data.paymentUrl, '_blank', 'noopener,noreferrer');
             } else {
                 setError('Failed to get payment URL from gateway.');
                 setLoading(false);
