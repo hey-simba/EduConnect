@@ -1,5 +1,8 @@
-import React from 'react';
+import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
+import axios from 'axios';
+
+const API_BASE = 'http://localhost:5000/api';
 
 const HomePage = () => {
   const user = JSON.parse(localStorage.getItem('user')) || { name: 'Student' };
@@ -94,7 +97,98 @@ const HomePage = () => {
           </div>
         </div>
 
+        {/* Featured Instructors Section */}
+        <div className="mt-16">
+          <h2 className="text-3xl font-bold text-gray-900 dark:text-white mb-2">Featured Instructors</h2>
+          <p className="text-gray-500 dark:text-gray-400 mb-8">Top-rated educators based on courses, live classes, and student feedback.</p>
+          <FeaturedInstructors />
+        </div>
+
       </div>
+    </div>
+  );
+};
+
+const FeaturedInstructors = () => {
+  const [instructors, setInstructors] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const loadInstructors = async () => {
+      try {
+        const res = await axios.get(`${API_BASE}/instructors/featured?limit=6`);
+        setInstructors(res.data);
+      } catch (err) {
+        console.error('Load featured instructors error:', err);
+      } finally {
+        setLoading(false);
+      }
+    };
+    loadInstructors();
+  }, []);
+
+  if (loading) {
+    return (
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+        {[...Array(6)].map((_, i) => (
+          <div key={i} className="bg-white dark:bg-[#111827] rounded-2xl p-6 shadow border border-gray-100 dark:border-gray-800 animate-pulse">
+            <div className="w-16 h-16 bg-gray-200 dark:bg-gray-700 rounded-full mb-4"></div>
+            <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded w-3/4 mb-2"></div>
+            <div className="h-3 bg-gray-200 dark:bg-gray-700 rounded w-1/2"></div>
+          </div>
+        ))}
+      </div>
+    );
+  }
+
+  if (instructors.length === 0) {
+    return (
+      <div className="text-center py-12 text-gray-500">
+        <p>No featured instructors yet. Check back soon!</p>
+      </div>
+    );
+  }
+
+  return (
+    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+      {instructors.map((instructor) => (
+        <div
+          key={instructor._id}
+          className="bg-white dark:bg-[#111827] rounded-2xl p-6 shadow border border-gray-100 dark:border-gray-800 hover:shadow-xl hover:-translate-y-1 transition-all"
+        >
+          <div className="flex items-center gap-4 mb-4">
+            <div className="w-16 h-16 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full flex items-center justify-center text-white text-2xl font-bold shadow-lg">
+              {instructor.name.charAt(0).toUpperCase()}
+            </div>
+            <div>
+              <h3 className="text-lg font-bold text-gray-900 dark:text-white">{instructor.name}</h3>
+              <div className="flex items-center gap-1 text-amber-500 text-sm">
+                ★ {instructor.avgRating.toFixed(1)}
+              </div>
+            </div>
+          </div>
+          <div className="grid grid-cols-3 gap-3 text-center">
+            <div className="bg-gray-50 dark:bg-gray-800 rounded-xl p-3">
+              <div className="text-lg font-extrabold text-blue-600 dark:text-blue-400">{instructor.totalCourses}</div>
+              <div className="text-[10px] text-gray-500 uppercase font-bold">Courses</div>
+            </div>
+            <div className="bg-gray-50 dark:bg-gray-800 rounded-xl p-3">
+              <div className="text-lg font-extrabold text-red-600 dark:text-red-400">{instructor.totalLiveClasses}</div>
+              <div className="text-[10px] text-gray-500 uppercase font-bold">Live</div>
+            </div>
+            <div className="bg-gray-50 dark:bg-gray-800 rounded-xl p-3">
+              <div className="text-lg font-extrabold text-green-600 dark:text-green-400">{instructor.totalEnrollments}</div>
+              <div className="text-[10px] text-gray-500 uppercase font-bold">Students</div>
+            </div>
+          </div>
+          <Link
+            to={`/instructor/${instructor._id}`}
+            className="mt-4 block text-center w-full py-2 rounded-xl bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400 text-sm font-bold hover:bg-blue-100 dark:hover:bg-blue-900/40 transition-colors"
+          >
+            View Profile
+          </Link>
+        </div>
+      ))}
     </div>
   );
 };

@@ -5,7 +5,7 @@ const User = require('../models/User');
 // POST: Register a new user
 const registerUser = async (req, res) => {
     try {
-        const { name, email, password } = req.body;
+        const { name, email, password, role } = req.body;
 
         // 1. Check if a user with this email already exists
         const existingUser = await User.findOne({ email });
@@ -21,7 +21,8 @@ const registerUser = async (req, res) => {
         const newUser = new User({
             name,
             email,
-            password: hashedPassword
+            password: hashedPassword,
+            role: role || 'student'
         });
 
         // 4. Save the user to MongoDB Atlas
@@ -60,6 +61,7 @@ const loginUser = async (req, res) => {
             message: 'Login successful!',
             token,
             user: {
+                _id: user._id,
                 id: user._id,
                 name: user.name,
                 email: user.email,

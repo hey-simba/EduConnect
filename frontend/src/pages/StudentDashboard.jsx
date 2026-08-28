@@ -1,14 +1,42 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import axios from 'axios';
+import { Link, useNavigate } from 'react-router-dom';
 
-const StudentDashboard = () => {
+export default function StudentDashboard() {
   const [activeTab, setActiveTab] = useState('courses');
+  const user = JSON.parse(localStorage.getItem('user')) || {};
+  const navigate = useNavigate();
+  const [applications, setApplications] = useState([]);
+  const [loading, setLoading] = useState(false);
 
-  // Dummy data to populate the UI
   const enrolledCourses = [
     { id: 1, title: 'Advanced Operating Systems', progress: 75, instructor: 'Dr. Alan Turing' },
     { id: 2, title: 'Discrete Mathematics Foundations', progress: 30, instructor: 'Prof. Ada Lovelace' },
     { id: 3, title: 'Web Development Bootcamp', progress: 100, instructor: 'Sarah Connor' },
   ];
+
+  const loadApplications = async () => {
+    if (!user._id && !user.id) return;
+    setLoading(true);
+    try {
+      const res = await axios.get(`http://localhost:5000/api/applications/student/${user._id || user.id}`);
+      setApplications(res.data);
+    } catch (err) {
+      console.error('Load applications error:', err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    if (activeTab === 'applications') {
+      loadApplications();
+    }
+  }, [activeTab]);
+
+  const handleMessageTutor = (tutorId) => {
+    navigate(`/messages?userId=${tutorId}`);
+  };
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-[#010816] text-gray-900 dark:text-gray-100 flex transition-colors duration-500 font-sans">
@@ -26,6 +54,12 @@ const StudentDashboard = () => {
             className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl font-medium transition-all ${activeTab === 'courses' ? 'bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400' : 'text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800'}`}
           >
             📚 My Courses
+          </button>
+          <button 
+            onClick={() => setActiveTab('applications')}
+            className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl font-medium transition-all ${activeTab === 'applications' ? 'bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400' : 'text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800'}`}
+          >
+            📩 Applications Received
           </button>
           <button 
             onClick={() => setActiveTab('assignments')}
@@ -55,7 +89,7 @@ const StudentDashboard = () => {
       <main className="flex-1 ml-64 p-8 lg:p-12">
         <header className="flex justify-between items-center mb-10">
           <div>
-            <h2 className="text-3xl font-bold tracking-tight">Welcome back, {(() => { try { return JSON.parse(localStorage.getItem('user'))?.name || 'Student'; } catch { return 'Student'; } })()}! 👋</h2>
+            <h2 className="text-3xl font-bold tracking-tight">Welcome back, {user.name || 'Student'}! 👋</h2>
             <p className="text-gray-500 dark:text-gray-400 mt-1">Ready to continue your learning journey?</p>
           </div>
           <div className="w-12 h-12 rounded-full bg-blue-100 dark:bg-blue-900/50 border-2 border-blue-500 flex items-center justify-center text-xl shadow-sm">
@@ -97,6 +131,72 @@ const StudentDashboard = () => {
           </section>
         )}
 
+        {activeTab === 'applications' && (
+          <section className="animate-fade-in">
+            <h3 className="text-xl font-bold mb-6 flex items-center gap-2">
+              <span className="w-2 h-6 bg-purple-500 rounded-full"></span>
+              Applications Received
+            </h3>
+            
+            {loading ? (
+              <p className="text-gray-500">Loading applications...</p>
+            ) : applications.length === 0 ? (
+              <div className="bg-white dark:bg-[#111827] rounded-2xl p-10 text-center border border-gray-100 dark:border-gray-800">
+                <p className="text-gray-500 dark:text-gray-400 text-lg">No applications received yet.</p>
+                <p className="text-gray-400 dark:text-gray-500 text-sm mt-2">Post a tuition job to receive applications from tutors.</p>
+              </div>
+            ) : (
+              <div className="bg-white dark:bg-[#111827] rounded-2xl shadow-sm border border-gray-100 dark:border-gray-800 overflow-hidden">
+                <table className="w-full text-left">
+                  <thead className="bg-gray-50 dark:bg-gray-900 text-gray-600 dark:text-gray-400 border-b border-gray-200 dark:border-gray-700">
+                    <tr>
+                      <th className="p-4 font-semibold">Tuition Post</th>
+                      <th className="p-4 font-semibold">Tutor</th>
+                      <th className="p-4 font-semibold">Status</th>
+                      <th className="p-4 font-semibold">Applied On</th>
+                      <th className="p-4 font-semibold text-right">Action</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {applications.map(app => (
+                      <tr key={app._id} className="border-b border-gray-100 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors">
+                        <td className="p-4 font-medium text-gray-900 dark:text-white">{app.postId?.title || 'Unknown Post'}</td>
+                        <td className="p-4 text-gray-600 dark:text-gray-300">
+                          {app.tutorId?._id ? (
+                            <Link to={`/instructor/${app.tutorId._id}`} className="text-blue-600 dark:text-blue-400 font-semibold hover:underline">
+                              {app.tutorId?.name || 'Unknown Tutor'}
+                            </Link>
+                          ) : (
+                            app.tutorId?.name || 'Unknown Tutor'
+                          )}
+                        </td>
+                        <td className="p-4">
+                          <span className={`px-2 py-1 text-xs font-bold rounded-full ${
+                            app.status === 'Accepted' ? 'bg-green-100 text-green-700' :
+                            app.status === 'Rejected' ? 'bg-red-100 text-red-700' :
+                            'bg-yellow-100 text-yellow-700'
+                          }`}>
+                            {app.status || 'Pending'}
+                          </span>
+                        </td>
+                        <td className="p-4 text-gray-600 dark:text-gray-300">{new Date(app.createdAt).toLocaleDateString()}</td>
+                        <td className="p-4 text-right">
+                          <button
+                            onClick={() => handleMessageTutor(app.tutorId?._id || app.tutorId)}
+                            className="bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold px-4 py-2 rounded-lg transition-all"
+                          >
+                            💬 Message
+                          </button>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </section>
+        )}
+
         {activeTab === 'assignments' && (
           <div className="flex flex-col items-center justify-center h-64 text-gray-500 dark:text-gray-400 animate-fade-in">
             <span className="text-4xl mb-4">📁</span>
@@ -114,6 +214,4 @@ const StudentDashboard = () => {
       </main>
     </div>
   );
-};
-
-export default StudentDashboard;
+}

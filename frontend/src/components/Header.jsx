@@ -1,9 +1,8 @@
 import { useState, useEffect, useRef } from 'react';
 import { Link, NavLink } from 'react-router-dom';
-import { io } from 'socket.io-client';
 import axios from 'axios';
+import { getSocket } from '../services/socket';
 
-const SOCKET_URL = 'http://localhost:5000';
 const API_BASE   = 'http://localhost:5000/api';
 
 const Header = () => {
@@ -42,30 +41,27 @@ const Header = () => {
       .then(res => setNotifications(res.data))
       .catch(err => console.error('Notification fetch error:', err));
 
-    // Connect socket and register this user
-    const socket = io(SOCKET_URL, { transports: ['websocket'] });
+    const socket = getSocket(userId);
     socketRef.current = socket;
 
-    socket.on('connect', () => {
-      socket.emit('register', userId);
-      console.log('🔌 Socket connected and user registered:', userId);
-    });
+    const onNewApplicant = (data) => {
+      setNotifications(prev => {
+        if (data._id && prev.some(n => n._id === data._id)) return prev;
+        return [{
+          _id: data._id || Date.now().toString(),
+          type: data.type || 'NEW_APPLICANT',
+          message: data.message,
+          link: data.link || '',
+          isRead: false,
+          createdAt: data.createdAt || new Date().toISOString()
+        }, ...prev];
+      });
+    };
 
-    // FR-4: Listen for real-time NEW_APPLICANT events
-    socket.on('NEW_APPLICANT', (data) => {
-      const newNotif = {
-        _id: Date.now().toString(), // Temporary client ID until we re-fetch
-        type: 'NEW_APPLICANT',
-        message: data.message,
-        link: data.link,
-        isRead: false,
-        createdAt: data.timestamp
-      };
-      setNotifications(prev => [newNotif, ...prev]);
-    });
+    socket.on('NEW_APPLICANT', onNewApplicant);
 
     return () => {
-      socket.disconnect();
+      socket.off('NEW_APPLICANT', onNewApplicant);
     };
   }, [userId]);
 
@@ -123,6 +119,7 @@ const Header = () => {
             <NavLink to="/courses" className={getNavClass}>Courses</NavLink>
             <NavLink to="/live-classes" className={getNavClass}>Live Classes</NavLink>
             <NavLink to="/tuition-hub" className={getNavClass}>Tuition Hub</NavLink>
+            <NavLink to="/messages" className={getNavClass}>Messages</NavLink>
           </nav>
 
           {/* RIGHT: Actions */}
@@ -255,6 +252,7 @@ const Header = () => {
           <NavLink to="/courses" onClick={toggleMobileMenu} className={getMobileNavClass}>Courses</NavLink>
           <NavLink to="/live-classes" onClick={toggleMobileMenu} className={getMobileNavClass}>Live Classes</NavLink>
           <NavLink to="/tuition-hub" onClick={toggleMobileMenu} className={getMobileNavClass}>Tuition Hub</NavLink>
+          <NavLink to="/messages" onClick={toggleMobileMenu} className={getMobileNavClass}>Messages</NavLink>
           
           <div className={`border-t pt-4 mt-2 flex justify-between items-center px-3 ${isDarkMode ? 'border-gray-800' : 'border-gray-200'}`}>
              <Link to={user?.role === 'admin' ? '/admin-dashboard' : user?.role === 'instructor' ? '/instructor-dashboard' : '/student-dashboard'} onClick={toggleMobileMenu} className={`px-4 py-2 rounded-md text-sm font-bold ${isDarkMode ? 'bg-blue-600/20 border border-blue-500 text-cyan-300' : 'bg-blue-50 border border-blue-200 text-blue-600'}`}>

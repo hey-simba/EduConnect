@@ -12,8 +12,14 @@ export default function ApplyTuitionModal({ isOpen, onClose, post, userTokens, u
     const handleSubmit = async (e) => {
         e.preventDefault();
         
-        if (userTokens < 1) {
-            setError('Insufficient tokens. Please buy tokens first.');
+        const tutorId = user._id || user.id;
+        if (!tutorId) {
+            setError('User ID not found. Please log in again.');
+            return;
+        }
+
+        if (user.role !== 'instructor') {
+            setError('Only instructors can apply. Please switch to Tutor mode in the Tuition Hub.');
             return;
         }
 
@@ -26,7 +32,7 @@ export default function ApplyTuitionModal({ isOpen, onClose, post, userTokens, u
         setError('');
 
         const formData = new FormData();
-        formData.append('tutorId', user._id || user.id || '650000000000000000000002');
+        formData.append('tutorId', tutorId);
         formData.append('preferableAmount', amount);
         formData.append('cvFile', cvFile);
 

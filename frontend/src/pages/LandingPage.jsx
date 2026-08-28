@@ -122,11 +122,7 @@ const LandingPage = () => {
           return;
         }
         
-        if (role === 'instructor') {
-          setSuccessMessage('Application received! Our admin team will review your credentials and let you know via email shortly.');
-        } else {
-          setSuccessMessage('Account successfully created! You can now log in.');
-        }
+        setSuccessMessage('Account successfully created! You can now log in.');
 
       } catch (error) {
         setEmailError('Could not connect to the server.');

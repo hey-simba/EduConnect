@@ -8,6 +8,9 @@ import CreateCourse from './pages/CreateCourse';
 import CourseDetails from './pages/CourseDetails';
 import InstructorDashboard from './pages/InstructorDashboard';
 import AdminDashboard from './pages/AdminDashboard';
+import Messages from './pages/Messages'; // <-- Real-Time Messaging
+import LiveClasses from './pages/LiveClasses'; // <-- Live Classes
+import InstructorProfile from './pages/InstructorProfile'; // <-- Instructor Profile
 
 // Import your global Header and Footer (adjust the path if they are saved elsewhere!)
 import Header from './components/Header'; 
@@ -45,6 +48,9 @@ function App() {
           <Route path="/instructor/create-course" element={<CreateCourse />} />
           <Route path="/instructor-dashboard" element={<InstructorDashboard />} />
           <Route path="/admin-dashboard" element={<AdminDashboard />} />
+          <Route path="/messages" element={<Messages />} /> {/* <-- Real-Time Messaging */}
+          <Route path="/live-classes" element={<LiveClasses />} /> {/* <-- Live Classes */}
+          <Route path="/instructor/:id" element={<InstructorProfile />} /> {/* <-- Instructor Profile */}
         </Route>
       </Routes>
     </BrowserRouter>

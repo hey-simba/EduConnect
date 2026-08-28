@@ -2,7 +2,7 @@ const express = require('express');
 const router = express.Router();
 const multer = require('multer');
 const path = require('path');
-const { applyForTuition, getMyApplications } = require('../controllers/applicationController');
+const { applyForTuition, getMyApplications, getStudentApplications, getTutorApplications } = require('../controllers/applicationController');
 
 // Multer setup for local CV upload
 const storage = multer.diskStorage({
@@ -20,5 +20,11 @@ router.post('/:postId/apply', upload.single('cvFile'), applyForTuition);
 
 // GET /api/applications/my-applications
 router.get('/my-applications', getMyApplications);
+
+// GET /api/applications/student/:studentId
+router.get('/student/:studentId', getStudentApplications);
+
+// GET /api/applications/tutor/:tutorId
+router.get('/tutor/:tutorId', getTutorApplications);
 
 module.exports = router;

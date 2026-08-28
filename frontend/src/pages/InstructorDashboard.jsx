@@ -1,32 +1,36 @@
 import { useState, useEffect } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import axios from 'axios';
 
 export default function InstructorDashboard() {
     const user = JSON.parse(localStorage.getItem('user'));
+    const navigate = useNavigate();
     const [courses, setCourses] = useState([]);
+    const [applications, setApplications] = useState([]);
     const [loading, setLoading] = useState(true);
+    const [activeTab, setActiveTab] = useState('courses');
 
     useEffect(() => {
-        // Fetch only courses created by this instructor
-        // We will fetch all courses and filter for now, or you could create a specific backend route
-        const fetchMyCourses = async () => {
+        const fetchData = async () => {
+            if (!user) return;
+            
             try {
-                // Since our current getCourses only returns published & approved courses,
-                // we might need a separate API route to get all instructor's courses including pending ones.
-                // For now, we will just simulate it by fetching all and filtering if the backend allowed it.
-                // Note: You will eventually want an /api/courses/instructor/:id route
-                const res = await axios.get(`http://localhost:5000/api/courses`);
-                const myCourses = res.data.filter(c => c.instructorId === user?.id || c.instructorId === user?._id);
+                // Fetch instructor's courses
+                const coursesRes = await axios.get(`http://localhost:5000/api/courses`);
+                const myCourses = coursesRes.data.filter(c => c.instructorId === user?.id || c.instructorId === user?._id);
                 setCourses(myCourses);
-                setLoading(false);
+
+                // Fetch instructor's applications
+                const appsRes = await axios.get(`http://localhost:5000/api/applications/tutor/${user._id || user.id}`);
+                setApplications(appsRes.data);
             } catch (err) {
                 console.error(err);
+            } finally {
                 setLoading(false);
             }
         };
         
-        if (user) fetchMyCourses();
+        if (user) fetchData();
     }, [user]);
 
     if (!user || user.role !== 'instructor') {
@@ -64,59 +68,139 @@ export default function InstructorDashboard() {
                         <div className="text-4xl font-bold text-gray-900 dark:text-white">{courses.length}</div>
                     </div>
                     <div className="bg-white dark:bg-gray-800 rounded-xl p-6 shadow-sm border border-gray-100 dark:border-gray-700">
-                        <h3 className="text-gray-500 dark:text-gray-400 text-sm font-semibold uppercase mb-2">Tokens Earned</h3>
-                        <div className="text-4xl font-bold text-green-600">
-                            {courses.reduce((sum, course) => sum + (course.totalEnrollments * course.price || 0), 0)}
-                        </div>
+                        <h3 className="text-gray-500 dark:text-gray-400 text-sm font-semibold uppercase mb-2">Job Applications</h3>
+                        <div className="text-4xl font-bold text-gray-900 dark:text-white">{applications.length}</div>
                     </div>
                 </div>
 
-                {/* My Courses List */}
-                <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-6">My Courses</h2>
-                
-                {loading ? (
-                    <p className="text-gray-500">Loading your courses...</p>
-                ) : courses.length === 0 ? (
-                    <div className="bg-white dark:bg-gray-800 rounded-xl p-10 text-center shadow-sm border border-gray-100 dark:border-gray-700">
-                        <p className="text-gray-500 dark:text-gray-400 mb-4 text-lg">You haven't created any courses yet.</p>
-                        <Link to="/instructor/create-course" className="text-blue-600 dark:text-blue-400 font-bold hover:underline">
-                            Create your first course →
-                        </Link>
+                {/* Tabs */}
+                <div className="flex gap-4 mb-6 border-b border-gray-200 dark:border-gray-800">
+                    <button
+                        onClick={() => setActiveTab('courses')}
+                        className={`pb-3 px-4 font-bold text-sm transition-all ${activeTab === 'courses' ? 'border-b-2 border-blue-500 text-blue-600 dark:text-blue-400' : 'text-gray-500 hover:text-gray-700 dark:hover:text-gray-300'}`}
+                    >
+                        My Courses
+                    </button>
+                    <button
+                        onClick={() => setActiveTab('applications')}
+                        className={`pb-3 px-4 font-bold text-sm transition-all ${activeTab === 'applications' ? 'border-b-2 border-blue-500 text-blue-600 dark:text-blue-400' : 'text-gray-500 hover:text-gray-700 dark:hover:text-gray-300'}`}
+                    >
+                        My Applications
+                    </button>
+                </div>
+
+                {/* Tab Content */}
+                {activeTab === 'courses' && (
+                    <div>
+                        <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-6">My Courses</h2>
+                        
+                        {loading ? (
+                            <p className="text-gray-500">Loading your courses...</p>
+                        ) : courses.length === 0 ? (
+                            <div className="bg-white dark:bg-gray-800 rounded-xl p-10 text-center shadow-sm border border-gray-100 dark:border-gray-700">
+                                <p className="text-gray-500 dark:text-gray-400 mb-4 text-lg">You haven't created any courses yet.</p>
+                                <Link to="/instructor/create-course" className="text-blue-600 dark:text-blue-400 font-bold hover:underline">
+                                    Create your first course →
+                                </Link>
+                            </div>
+                        ) : (
+                            <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 overflow-hidden">
+                                <table className="w-full text-left">
+                                    <thead className="bg-gray-50 dark:bg-gray-900 text-gray-600 dark:text-gray-400 border-b border-gray-200 dark:border-gray-700">
+                                        <tr>
+                                            <th className="p-4 font-semibold">Course Title</th>
+                                            <th className="p-4 font-semibold">Price</th>
+                                            <th className="p-4 font-semibold">Status</th>
+                                            <th className="p-4 font-semibold">Enrollments</th>
+                                            <th className="p-4 font-semibold text-right">Action</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {courses.map(course => (
+                                            <tr key={course._id} className="border-b border-gray-100 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-750 transition-colors">
+                                                <td className="p-4 font-medium text-gray-900 dark:text-white">{course.title}</td>
+                                                <td className="p-4 text-gray-600 dark:text-gray-300">৳{course.price}</td>
+                                                <td className="p-4">
+                                                    <span className={`px-2 py-1 text-xs font-bold rounded-full ${
+                                                        course.approvalStatus === 'Approved' ? 'bg-green-100 text-green-700' :
+                                                        course.approvalStatus === 'Rejected' ? 'bg-red-100 text-red-700' :
+                                                        'bg-yellow-100 text-yellow-700'
+                                                    }`}>
+                                                        {course.approvalStatus || 'Approved'}
+                                                    </span>
+                                                </td>
+                                                <td className="p-4 text-gray-600 dark:text-gray-300">{course.totalEnrollments}</td>
+                                                <td className="p-4 text-right">
+                                                    <Link to={`/course/${course._id}`} className="text-blue-600 hover:underline text-sm font-semibold">View</Link>
+                                                </td>
+                                            </tr>
+                                        ))}
+                                    </tbody>
+                                </table>
+                            </div>
+                        )}
                     </div>
-                ) : (
-                    <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 overflow-hidden">
-                        <table className="w-full text-left">
-                            <thead className="bg-gray-50 dark:bg-gray-900 text-gray-600 dark:text-gray-400 border-b border-gray-200 dark:border-gray-700">
-                                <tr>
-                                    <th className="p-4 font-semibold">Course Title</th>
-                                    <th className="p-4 font-semibold">Price</th>
-                                    <th className="p-4 font-semibold">Status</th>
-                                    <th className="p-4 font-semibold">Enrollments</th>
-                                    <th className="p-4 font-semibold text-right">Action</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {courses.map(course => (
-                                    <tr key={course._id} className="border-b border-gray-100 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-750 transition-colors">
-                                        <td className="p-4 font-medium text-gray-900 dark:text-white">{course.title}</td>
-                                        <td className="p-4 text-gray-600 dark:text-gray-300">৳{course.price}</td>
-                                        <td className="p-4">
-                                            <span className={`px-2 py-1 text-xs font-bold rounded-full ${
-                                                course.approvalStatus === 'Approved' ? 'bg-green-100 text-green-700' :
-                                                course.approvalStatus === 'Rejected' ? 'bg-red-100 text-red-700' :
-                                                'bg-yellow-100 text-yellow-700'
-                                            }`}>
-                                                {course.approvalStatus || 'Approved'}
-                                            </span>
-                                        </td>
-                                        <td className="p-4 text-gray-600 dark:text-gray-300">{course.totalEnrollments}</td>
-                                        <td className="p-4 text-right">
-                                            <Link to={`/course/${course._id}`} className="text-blue-600 hover:underline text-sm font-semibold">View</Link>
-                                        </td>
-                                    </tr>
-                                ))}
-                            </tbody>
-                        </table>
+                )}
+
+                {activeTab === 'applications' && (
+                    <div>
+                        <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-6">My Tuition Applications</h2>
+                        
+                        {loading ? (
+                            <p className="text-gray-500">Loading applications...</p>
+                        ) : applications.length === 0 ? (
+                            <div className="bg-white dark:bg-gray-800 rounded-xl p-10 text-center shadow-sm border border-gray-100 dark:border-gray-700">
+                                <p className="text-gray-500 dark:text-gray-400 mb-4 text-lg">You haven't applied to any tuition jobs yet.</p>
+                                <Link to="/tuition-hub" className="text-blue-600 dark:text-blue-400 font-bold hover:underline">
+                                    Browse Tuition Jobs →
+                                </Link>
+                            </div>
+                        ) : (
+                            <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 overflow-hidden">
+                                <table className="w-full text-left">
+                                    <thead className="bg-gray-50 dark:bg-gray-900 text-gray-600 dark:text-gray-400 border-b border-gray-200 dark:border-gray-700">
+                                        <tr>
+                                            <th className="p-4 font-semibold">Job Title</th>
+                                            <th className="p-4 font-semibold">Location</th>
+                                            <th className="p-4 font-semibold">Budget</th>
+                                            <th className="p-4 font-semibold">Status</th>
+                                            <th className="p-4 font-semibold">Applied On</th>
+                                            <th className="p-4 font-semibold text-right">Action</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {applications.map(app => (
+                                            <tr key={app._id} className="border-b border-gray-100 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-750 transition-colors">
+                                                <td className="p-4 font-medium text-gray-900 dark:text-white">{app.postId?.title || 'Unknown'}</td>
+                                                <td className="p-4 text-gray-600 dark:text-gray-300">{app.postId?.location?.area}, {app.postId?.location?.district}</td>
+                                                <td className="p-4 text-gray-600 dark:text-gray-300">৳{app.postId?.salary || 'N/A'}</td>
+                                                <td className="p-4">
+                                                    <span className={`px-2 py-1 text-xs font-bold rounded-full ${
+                                                        app.status === 'Accepted' ? 'bg-green-100 text-green-700' :
+                                                        app.status === 'Rejected' ? 'bg-red-100 text-red-700' :
+                                                        'bg-yellow-100 text-yellow-700'
+                                                    }`}>
+                                                        {app.status}
+                                                    </span>
+                                                </td>
+                                                <td className="p-4 text-gray-600 dark:text-gray-300">{new Date(app.createdAt).toLocaleDateString()}</td>
+                                                <td className="p-4 text-right">
+                                                    <button
+                                                        onClick={() => {
+                                                            const studentId = app.postId?.studentId?._id || app.postId?.studentId;
+                                                            if (studentId) navigate(`/messages?userId=${studentId}`);
+                                                        }}
+                                                        className="bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold px-4 py-2 rounded-lg transition-all"
+                                                    >
+                                                        Message student
+                                                    </button>
+                                                </td>
+                                            </tr>
+                                        ))}
+                                    </tbody>
+                                </table>
+                            </div>
+                        )}
                     </div>
                 )}
             </div>

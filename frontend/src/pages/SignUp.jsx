@@ -7,6 +7,7 @@ export default function SignUp() {
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [role, setRole] = useState('student');
   
   // Hook to redirect the user after they register
   const navigate = useNavigate();
@@ -19,7 +20,8 @@ export default function SignUp() {
       const response = await axios.post('http://localhost:5000/api/auth/signup', {
         name,
         email,
-        password
+        password,
+        role
       });
       
       alert(response.data.message); // Should say "User successfully created!"
@@ -66,6 +68,16 @@ export default function SignUp() {
             required 
             style={{ padding: '8px', margin: '10px' }}
           />
+        </div>
+        <div>
+          <select 
+            value={role} 
+            onChange={(e) => setRole(e.target.value)}
+            style={{ padding: '8px', margin: '10px' }}
+          >
+            <option value="student">Student</option>
+            <option value="instructor">Instructor / Tutor</option>
+          </select>
         </div>
         <button type="submit" style={{ padding: '10px 20px', cursor: 'pointer' }}>
           Create Account
