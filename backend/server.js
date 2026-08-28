@@ -1,46 +1,63 @@
+﻿require("dotenv").config();
 const express = require("express");
-const http = require("http");
 const mongoose = require("mongoose");
 const cors = require("cors");
+const http = require("http");
 const path = require("path");
-require("dotenv").config();
 
 const app = express();
-const PORT = process.env.PORT || 5000;
-const httpServer = http.createServer(app);
 
-// Middleware
+const server = http.createServer(app);
+
+// basic middlewares
 app.use(cors());
 app.use(express.json());
 app.use("/uploads", express.static(path.join(__dirname, "uploads")));
 
-// Database connection
-mongoose.connect(process.env.MONGO_URI)
-    .then(() => {
-        console.log("? MongoDB connected successfully");
-        require("./utils/seedAdmin")(); 
-    })
-    .catch((err) => console.error("? Database connection error:", err));
+// connect to database
+mongoose.connect(process.env.MONGO_URI).then(function() {
+    console.log("Database connected successfully!");
+}).catch(function(err) {
+    console.log("Database connection error: ", err);
+});
 
-// Initialize Real-time Chat (Socket.io)
-const { initializeSocket } = require("./utils/socketHandler");
-initializeSocket(httpServer, app);
+// setup chat system
+const chatSystem = require("./utils/socketHandler");
+chatSystem.initializeSocket(server, app);
 
-// API Routes
-app.use("/api/auth", require("./routes/auth"));
-app.use("/api/admin", require("./routes/adminRoutes"));
-app.use("/api/tuitions", require("./routes/tuition"));
-app.use("/api/applications", require("./routes/application"));
-app.use("/api/wallet", require("./routes/wallet"));
-app.use("/api/notifications", require("./routes/notifications"));
-app.use("/api/courses", require("./routes/courses"));
-app.use("/api/assignments", require("./routes/assignments"));
-app.use("/api/messages", require("./routes/messages"));
-app.use("/api/instructors", require("./routes/instructors"));
-app.use("/api/live-classes", require("./routes/liveClasses"));
+// import all my routes here
+const authRoutes = require("./routes/auth");
+const adminRoutes = require("./routes/adminRoutes");
+const tuitionRoutes = require("./routes/tuition");
+const applicationRoutes = require("./routes/application");
+const walletRoutes = require("./routes/wallet");
+const notificationRoutes = require("./routes/notifications");
+const courseRoutes = require("./routes/courses");
+const assignmentRoutes = require("./routes/assignments");
+const messageRoutes = require("./routes/messages");
+const instructorRoutes = require("./routes/instructors");
+const liveClassRoutes = require("./routes/liveClasses");
 
-app.get("/", (req, res) => res.send("EduConnect Backend is running!"));
+// use the routes
+app.use("/api/auth", authRoutes);
+app.use("/api/admin", adminRoutes);
+app.use("/api/tuitions", tuitionRoutes);
+app.use("/api/applications", applicationRoutes);
+app.use("/api/wallet", walletRoutes);
+app.use("/api/notifications", notificationRoutes);
+app.use("/api/courses", courseRoutes);
+app.use("/api/assignments", assignmentRoutes);
+app.use("/api/messages", messageRoutes);
+app.use("/api/instructors", instructorRoutes);
+app.use("/api/live-classes", liveClassRoutes);
 
-httpServer.listen(PORT, () => {
-    console.log(`?? Server running on port ${PORT}`);
+// testing if server works
+app.get("/", function(req, res) {
+    res.send("Backend is running fine");
+});
+
+// start the server
+const port = process.env.PORT || 5000;
+server.listen(port, function() {
+    console.log("Server started on port " + port);
 });
