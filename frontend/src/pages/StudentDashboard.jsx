@@ -269,22 +269,27 @@ export default function StudentDashboard() {
                 <p className="text-sm text-blue-100 mb-6">Use tokens to post in the Tuition Hub or buy specialized courses.</p>
                 <button 
                   onClick={async () => {
-                    const amount = window.prompt("How many tokens would you like to buy? (1 Token = 1 Taka)", "100");
+                    const amount = window.prompt("How many tokens would you like to buy? (1 Token = 100 BDT)", "1");
                     if (!amount || isNaN(amount)) return;
                     
                     try {
-                        const res = await axios.post(`http://localhost:5000/api/wallet/buy-tokens`, {
+                        // Backend expects the amount in BDT (1 Token = 100 BDT)
+                        const totalBdt = Number(amount) * 100;
+
+                        const res = await axios.post(`http://localhost:5000/api/wallet/buy`, {
                             userId: user._id || user.id,
-                            amount: Number(amount)
+                            amount: totalBdt,
+                            name: user.name,
+                            email: user.email
                         });
                         
                         if (res.data.paymentUrl) {
                             window.location.href = res.data.paymentUrl;
                         } else {
-                            alert('SSL Commerz payment URL not received yet. Teammate might still be working on it!');
+                            alert('SSL Commerz failed to generate payment URL.');
                         }
                     } catch (err) {
-                        alert('Failed to initiate payment. SSL Commerz integration might be pending.');
+                        alert(err.response?.data?.message || 'Failed to initiate payment.');
                     }
                   }}
                   className="bg-white text-blue-600 px-5 py-2 rounded-xl font-bold text-sm hover:bg-gray-50 transition-colors w-full shadow-sm"

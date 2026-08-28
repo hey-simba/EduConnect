@@ -10,19 +10,14 @@ export default function AdminDashboard() {
     
     // Data States
     const [pendingInstructors, setPendingInstructors] = useState([]);
-    const [pendingCourses, setPendingCourses] = useState([
-        // Mock data to show layout while backend is being built
-        { _id: 'c1', title: 'Advanced React Patterns', instructorName: 'Jane Doe', category: 'Development', submittedAt: '2026-08-25' },
-        { _id: 'c2', title: 'Data Science with Python', instructorName: 'John Smith', category: 'Data Science', submittedAt: '2026-08-27' }
-    ]);
+    const [pendingCourses, setPendingCourses] = useState([]);
     const [reports, setReports] = useState([
-        // Mock data for moderation
+        // Mock data for moderation (Moderation backend not yet built)
         { _id: 'r1', type: 'Course', targetName: 'Fake Course 101', reportedBy: 'student123', reason: 'Misleading content', date: '2026-08-28' },
         { _id: 'r2', type: 'Chat', targetName: 'Message from user99', reportedBy: 'student456', reason: 'Inappropriate language', date: '2026-08-28' }
     ]);
     const [loading, setLoading] = useState(true);
 
-    // FIX: Parse user once, or use a primitive value in the dependency array to prevent infinite re-renders.
     const userRole = user?.role;
 
     useEffect(() => {
@@ -30,6 +25,7 @@ export default function AdminDashboard() {
             navigate('/home');
         } else {
             fetchPendingInstructors();
+            fetchPendingCourses();
         }
     }, [userRole, navigate]);
 
@@ -41,6 +37,15 @@ export default function AdminDashboard() {
             console.error('Error fetching pending instructors:', error);
         } finally {
             setLoading(false);
+        }
+    };
+
+    const fetchPendingCourses = async () => {
+        try {
+            const response = await axios.get('http://localhost:5000/api/admin/courses/pending');
+            setPendingCourses(response.data);
+        } catch (error) {
+            console.error('Error fetching pending courses:', error);
         }
     };
 
@@ -67,14 +72,27 @@ export default function AdminDashboard() {
         }
     };
 
-    const handleApproveCourse = (id) => {
-        alert('Course approval endpoint not yet implemented by backend.');
-        setPendingCourses(prev => prev.filter(c => c._id !== id));
+    const handleApproveCourse = async (id) => {
+        try {
+            await axios.put(`http://localhost:5000/api/admin/courses/approve/${id}`);
+            alert('Course approved successfully and is now public.');
+            fetchPendingCourses();
+        } catch (error) {
+            console.error('Error approving course:', error);
+            alert('Failed to approve course');
+        }
     };
 
-    const handleRejectCourse = (id) => {
-        alert('Course rejection endpoint not yet implemented by backend.');
-        setPendingCourses(prev => prev.filter(c => c._id !== id));
+    const handleRejectCourse = async (id) => {
+        if (!window.confirm('Are you sure you want to reject this course?')) return;
+        try {
+            await axios.put(`http://localhost:5000/api/admin/courses/reject/${id}`);
+            alert('Course rejected successfully.');
+            fetchPendingCourses();
+        } catch (error) {
+            console.error('Error rejecting course:', error);
+            alert('Failed to reject course');
+        }
     };
 
     const handleDismissReport = (id) => {
@@ -206,7 +224,7 @@ export default function AdminDashboard() {
                                             <p className="text-sm text-gray-500 mt-1">
                                                 By <span className="font-semibold text-gray-700">{course.instructorName}</span> • {course.category}
                                             </p>
-                                            <p className="text-xs text-gray-400 mt-1">Submitted on {course.submittedAt}</p>
+                                            <p className="text-xs text-gray-400 mt-1">Submitted on {new Date(course.createdAt).toLocaleDateString()}</p>
                                         </div>
                                         <div className="flex gap-2 w-full md:w-auto">
                                             <button className="flex-1 md:flex-none border border-gray-300 text-gray-700 px-4 py-2 rounded-lg font-medium hover:bg-gray-50 transition">

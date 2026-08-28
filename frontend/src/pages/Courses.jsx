@@ -128,16 +128,20 @@ function CourseDetailModal({ isOpen, onClose, courseId, user, enrolledIds, onEnr
         setEnrollError('');
         setEnrolling(true);
         try {
-            const res = await axios.post(`${API_BASE}/courses/${courseId}/enroll`, {
+            // Hit the new SSL Commerz route
+            const res = await axios.post(`${API_BASE}/courses/${courseId}/buy`, {
                 studentId: user._id || user.id
             });
-            onEnrollSuccess(res.data);
-            // Refresh course data to get updated enrollment count
-            const updated = await axios.get(`${API_BASE}/courses/${courseId}`);
-            setData(updated.data);
+            
+            if (res.data.paymentUrl) {
+                // Redirect to the SSL Commerz Gateway
+                window.location.href = res.data.paymentUrl;
+            } else {
+                setEnrollError('Failed to get payment URL from gateway.');
+                setEnrolling(false);
+            }
         } catch (err) {
-            setEnrollError(err.response?.data?.message || 'Enrollment failed.');
-        } finally {
+            setEnrollError(err.response?.data?.message || 'Payment initiation failed.');
             setEnrolling(false);
         }
     };
