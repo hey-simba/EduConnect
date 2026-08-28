@@ -13,6 +13,10 @@ export default function CourseDetails() {
     const [watchedVideos, setWatchedVideos] = useState([]);
     const [certificateClaimed, setCertificateClaimed] = useState(false);
     
+    // Assignments state
+    const [assignments, setAssignments] = useState([]);
+    const [uploading, setUploading] = useState(false);
+    
     // Auth check
     const user = JSON.parse(localStorage.getItem('user'));
     const userId = user?._id || user?.id;
@@ -47,6 +51,10 @@ export default function CourseDetails() {
                 
                 setHasAccess(userHasAccess);
 
+                // Fetch Assignments
+                const assignRes = await axios.get(`http://localhost:5000/api/assignments/course/${courseId}`);
+                setAssignments(assignRes.data);
+
                 // Default to first video, but it will be locked if no access
                 if (fetchedCourse.videos && fetchedCourse.videos.length > 0) {
                     setActiveVideo(fetchedCourse.videos[0]);
@@ -60,6 +68,30 @@ export default function CourseDetails() {
         };
         fetchCourseData();
     }, [courseId, userId]);
+
+    const handleAssignmentSubmit = async (assignmentId, file) => {
+        if (!file) return alert('Select a file first');
+        
+        const formData = new FormData();
+        formData.append('file', file);
+        formData.append('studentId', userId);
+
+        setUploading(true);
+        try {
+            await axios.post(`http://localhost:5000/api/assignments/${assignmentId}/submit`, formData, {
+                headers: { 'Content-Type': 'multipart/form-data' }
+            });
+            alert('Assignment submitted successfully!');
+            // Refresh assignments
+            const assignRes = await axios.get(`http://localhost:5000/api/assignments/course/${courseId}`);
+            setAssignments(assignRes.data);
+        } catch (error) {
+            console.error('Submission failed', error);
+            alert('Failed to submit assignment');
+        } finally {
+            setUploading(false);
+        }
+    };
 
     const handleVideoSelect = async (video) => {
         if (!hasAccess) {
@@ -99,18 +131,37 @@ export default function CourseDetails() {
             return;
         }
 
-        // NOTE: In final implementation, this triggers SSLCommerz. 
-        // For now, it mocks the backend call.
         try {
             const res = await axios.post(`http://localhost:5000/api/courses/${courseId}/enroll`, {
                 studentId: userId
             });
-            alert(res.data.message);
-            setHasAccess(true);
+            
+            // Integration with Teammate's SSL Commerz backend
+            if (res.data.paymentUrl) {
+                window.location.href = res.data.paymentUrl; // Redirect to payment gateway
+            } else {
+                // Fallback if payment is not required or backend isn't ready
+                alert(res.data.message || "Enrolled successfully!");
+                setHasAccess(true);
+            }
         } catch (err) {
             alert(err.response?.data?.message || "Enrollment failed.");
         }
     };
+
+    const allAssignmentsPassed = assignments.length > 0 ? assignments.every(a => {
+        const sub = a.submissions.find(s => s.studentId === userId);
+        return sub && sub.status === 'Graded' && sub.grade >= 50;
+    }) : true;
+
+    const progress100 = course?.videos?.length > 0 && watchedVideos.length === course.videos.length;
+
+    useEffect(() => {
+        // Auto-trigger certificate email when 100% complete and all assignments passed
+        if (course && hasAccess && course.hasCertificate && progress100 && allAssignmentsPassed && !certificateClaimed) {
+            handleClaimCertificate();
+        }
+    }, [course, hasAccess, progress100, allAssignmentsPassed, certificateClaimed]);
 
     if (loading) return <div className="text-center py-20 text-xl font-bold text-gray-500">Loading Course...</div>;
     if (!course) return <div className="text-center py-20 text-xl text-red-500">Course not found.</div>;
@@ -225,9 +276,10 @@ export default function CourseDetails() {
                                         ) : (
                                             <button 
                                                 onClick={handleClaimCertificate}
-                                                className="w-full bg-gradient-to-r from-amber-400 to-amber-500 hover:from-amber-500 hover:to-amber-600 text-black font-extrabold py-4 rounded-xl shadow-md transition-all hover:scale-[1.01] flex items-center justify-center gap-2"
+                                                disabled={!allAssignmentsPassed}
+                                                className={`w-full font-extrabold py-4 rounded-xl shadow-md transition-all flex items-center justify-center gap-2 ${allAssignmentsPassed ? 'bg-gradient-to-r from-amber-400 to-amber-500 hover:from-amber-500 hover:to-amber-600 text-black hover:scale-[1.01]' : 'bg-gray-300 text-gray-500 cursor-not-allowed'}`}
                                             >
-                                                <span>🎓</span> Claim Your Certificate
+                                                <span>🎓</span> {allAssignmentsPassed ? 'Claim Your Certificate' : 'Pass All Assignments to Claim'}
                                             </button>
                                         )}
                                     </div>
@@ -236,12 +288,76 @@ export default function CourseDetails() {
                         )}
                     </div>
 
-                    <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
+                    <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100 mb-6">
                         <h2 className="text-2xl font-bold mb-4">About This Course</h2>
                         <p className="text-gray-700 leading-relaxed mb-6 whitespace-pre-line">
                             {course.description}
                         </p>
                     </div>
+
+                    {/* Assignments Section */}
+                    {hasAccess && assignments.length > 0 && (
+                        <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
+                            <h2 className="text-2xl font-bold mb-6">Assignments</h2>
+                            <div className="space-y-6">
+                                {assignments.map(assignment => {
+                                    const submission = assignment.submissions.find(s => s.studentId === userId);
+                                    
+                                    return (
+                                        <div key={assignment._id} className="border border-gray-200 rounded-lg p-5">
+                                            <div className="flex justify-between items-start mb-3">
+                                                <h3 className="font-bold text-lg text-gray-900">{assignment.title}</h3>
+                                                <span className="text-sm text-gray-500 bg-gray-100 px-3 py-1 rounded-full">
+                                                    Due: {new Date(assignment.deadline).toLocaleDateString()}
+                                                </span>
+                                            </div>
+                                            <p className="text-gray-700 mb-4 whitespace-pre-line">{assignment.prompt}</p>
+                                            
+                                            {/* Submission Status */}
+                                            {submission ? (
+                                                <div className={`p-4 rounded-lg ${submission.status === 'Graded' ? (submission.grade >= 50 ? 'bg-green-50 border border-green-200' : 'bg-red-50 border border-red-200') : 'bg-blue-50 border border-blue-200'}`}>
+                                                    <div className="flex justify-between items-center">
+                                                        <div>
+                                                            <p className="font-bold text-sm mb-1">
+                                                                Status: {submission.status}
+                                                            </p>
+                                                            <a href={`http://localhost:5000${submission.fileUrl}`} target="_blank" rel="noopener noreferrer" className="text-blue-600 text-sm hover:underline">
+                                                                View Submitted File
+                                                            </a>
+                                                        </div>
+                                                        {submission.status === 'Graded' && (
+                                                            <div className="text-right">
+                                                                <div className="text-xs text-gray-500 uppercase tracking-wider font-bold mb-1">Grade</div>
+                                                                <div className={`text-2xl font-extrabold ${submission.grade >= 50 ? 'text-green-600' : 'text-red-600'}`}>
+                                                                    {submission.grade}/100
+                                                                </div>
+                                                            </div>
+                                                        )}
+                                                    </div>
+                                                </div>
+                                            ) : (
+                                                <div className="mt-4 border-t pt-4">
+                                                    <label className="block text-sm font-bold text-gray-700 mb-2">Submit Your Work (PDF, DOCX, ZIP)</label>
+                                                    <input 
+                                                        type="file" 
+                                                        onChange={(e) => handleAssignmentSubmit(assignment._id, e.target.files[0])}
+                                                        disabled={uploading}
+                                                        className="block w-full text-sm text-gray-500
+                                                        file:mr-4 file:py-2 file:px-4
+                                                        file:rounded-full file:border-0
+                                                        file:text-sm file:font-semibold
+                                                        file:bg-blue-50 file:text-blue-700
+                                                        hover:file:bg-blue-100
+                                                        disabled:opacity-50 cursor-pointer"
+                                                    />
+                                                </div>
+                                            )}
+                                        </div>
+                                    );
+                                })}
+                            </div>
+                        </div>
+                    )}
                 </div>
 
                 {/* Right Col: Curriculum List */}

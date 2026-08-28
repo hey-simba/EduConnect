@@ -24,17 +24,33 @@ const registerUser = async (req, res) => {
 
         // 3. Create the new user object
         const isInstructor = role === 'instructor';
+        
+        let trialEndsAt = null;
+        if (isInstructor) {
+            const oneMonthFromNow = new Date();
+            oneMonthFromNow.setMonth(oneMonthFromNow.getMonth() + 1);
+            trialEndsAt = oneMonthFromNow;
+        }
+
         const newUser = new User({
             name,
             email,
             password: hashedPassword,
             role: role || 'student',
             accountStatus: isInstructor ? 'Pending' : 'Approved',
-            cvLink: isInstructor ? cvLink : ''
+            cvLink: isInstructor ? cvLink : '',
+            trialEndsAt,
+            isSubscribed: false,
+            subscriptionExpiry: null
         });
 
         // 4. Save the user to MongoDB Atlas
         await newUser.save();
+        
+        if (isInstructor) {
+            return res.status(201).json({ message: 'User successfully created! Admin approval needed. Once the admin approves, you will receive an email notification.' });
+        }
+        
         res.status(201).json({ message: 'User successfully created!' });
 
     } catch (error) {
@@ -82,7 +98,10 @@ const loginUser = async (req, res) => {
                 name: user.name,
                 email: user.email,
                 role: user.role,
-                tokens: user.tokens
+                tokens: user.tokens,
+                trialEndsAt: user.trialEndsAt,
+                isSubscribed: user.isSubscribed,
+                subscriptionExpiry: user.subscriptionExpiry
             }
         });
 

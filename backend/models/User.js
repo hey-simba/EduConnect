@@ -48,6 +48,18 @@ const userSchema = new mongoose.Schema({
     availableBalance: {
         type: Number,
         default: 0
+    },
+    trialEndsAt: {
+        type: Date,
+        default: null
+    },
+    isSubscribed: {
+        type: Boolean,
+        default: false
+    },
+    subscriptionExpiry: {
+        type: Date,
+        default: null
     }
 }, {
     timestamps: true // This automatically adds 'createdAt' and 'updatedAt' fields

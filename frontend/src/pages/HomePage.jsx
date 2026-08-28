@@ -116,7 +116,7 @@ const FeaturedInstructors = () => {
   useEffect(() => {
     const loadInstructors = async () => {
       try {
-        const res = await axios.get(`${API_BASE}/instructors/featured?limit=6`);
+        const res = await axios.get(`${API_BASE}/instructors/featured?limit=3`);
         setInstructors(res.data);
       } catch (err) {
         console.error('Load featured instructors error:', err);
@@ -130,7 +130,7 @@ const FeaturedInstructors = () => {
   if (loading) {
     return (
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-        {[...Array(6)].map((_, i) => (
+        {[...Array(3)].map((_, i) => (
           <div key={i} className="bg-white dark:bg-[#111827] rounded-2xl p-6 shadow border border-gray-100 dark:border-gray-800 animate-pulse">
             <div className="w-16 h-16 bg-gray-200 dark:bg-gray-700 rounded-full mb-4"></div>
             <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded w-3/4 mb-2"></div>
@@ -163,22 +163,22 @@ const FeaturedInstructors = () => {
             <div>
               <h3 className="text-lg font-bold text-gray-900 dark:text-white">{instructor.name}</h3>
               <div className="flex items-center gap-1 text-amber-500 text-sm">
-                ★ {instructor.avgRating.toFixed(1)}
+                ★ {(instructor.avgCourseRating || 0).toFixed(1)}
               </div>
             </div>
           </div>
           <div className="grid grid-cols-3 gap-3 text-center">
             <div className="bg-gray-50 dark:bg-gray-800 rounded-xl p-3">
-              <div className="text-lg font-extrabold text-blue-600 dark:text-blue-400">{instructor.totalCourses}</div>
+              <div className="text-lg font-extrabold text-blue-600 dark:text-blue-400">{instructor.totalCoursesPublished || 0}</div>
               <div className="text-[10px] text-gray-500 uppercase font-bold">Courses</div>
             </div>
             <div className="bg-gray-50 dark:bg-gray-800 rounded-xl p-3">
-              <div className="text-lg font-extrabold text-red-600 dark:text-red-400">{instructor.totalLiveClasses}</div>
-              <div className="text-[10px] text-gray-500 uppercase font-bold">Live</div>
+              <div className="text-lg font-extrabold text-green-600 dark:text-green-400">{instructor.totalStudentsEnrolled || 0}</div>
+              <div className="text-[10px] text-gray-500 uppercase font-bold">Students</div>
             </div>
             <div className="bg-gray-50 dark:bg-gray-800 rounded-xl p-3">
-              <div className="text-lg font-extrabold text-green-600 dark:text-green-400">{instructor.totalEnrollments}</div>
-              <div className="text-[10px] text-gray-500 uppercase font-bold">Students</div>
+              <div className="text-lg font-extrabold text-purple-600 dark:text-purple-400">{Math.round(instructor.score || 0)}</div>
+              <div className="text-[10px] text-gray-500 uppercase font-bold">Score</div>
             </div>
           </div>
           <Link

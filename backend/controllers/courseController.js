@@ -73,6 +73,18 @@ const createCourse = async (req, res) => {
             totalDuration, totalAssignments, hasCertificate 
         } = req.body;
 
+        // Check Subscription or Trial
+        const user = await User.findById(instructorId);
+        if (user && user.role === 'instructor') {
+            const now = new Date();
+            const hasActiveTrial = user.trialEndsAt && new Date(user.trialEndsAt) > now;
+            const hasActiveSubscription = user.isSubscribed && user.subscriptionExpiry && new Date(user.subscriptionExpiry) > now;
+            
+            if (!hasActiveTrial && !hasActiveSubscription) {
+                return res.status(403).json({ message: 'Your trial or subscription has expired. Please renew your subscription to publish new courses.' });
+            }
+        }
+
         if (!title || !description || !instructorId || price === undefined) {
             return res.status(400).json({ message: 'Missing required fields' });
         }
@@ -267,6 +279,31 @@ const claimCertificate = async (req, res) => {
 
         const enrollment = await Enrollment.findOne({ studentId, courseId }).populate('studentId').populate('courseId');
         if (!enrollment) return res.status(404).json({ message: 'Enrollment not found' });
+
+        // Ensure all videos are watched
+        const course = enrollment.courseId;
+        const totalVideos = course.videos ? course.videos.length : 0;
+        if (enrollment.watchedVideos.length < totalVideos) {
+            return res.status(403).json({ message: 'You must watch all videos before claiming the certificate.' });
+        }
+
+        // Ensure all assignments are passed (grade >= 50)
+        const Assignment = require('../models/Assignment');
+        const assignments = await Assignment.find({ courseId });
+        
+        for (let assignment of assignments) {
+            const submission = assignment.submissions.find(s => s.studentId.toString() === studentId.toString());
+            
+            if (!submission) {
+                return res.status(403).json({ message: `You have not submitted the assignment: ${assignment.title}` });
+            }
+            if (submission.status !== 'Graded') {
+                return res.status(403).json({ message: `Your submission for '${assignment.title}' is still pending grading.` });
+            }
+            if (submission.grade < 50) {
+                return res.status(403).json({ message: `You failed the assignment '${assignment.title}'. You must score at least 50 to pass.` });
+            }
+        }
 
         enrollment.certificateClaimed = true;
         await enrollment.save();

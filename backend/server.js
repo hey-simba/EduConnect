@@ -105,12 +105,19 @@ console.log("MONGO_URI =", process.env.MONGO_URI);
 mongoose.connect(process.env.MONGO_URI)
     .then(() => {
         console.log('✅ MongoDB connected successfully!');
+        
+        // Auto-create default admin if none exists
+        const seedAdmin = require('./utils/seedAdmin');
+        seedAdmin();
     })
     .catch((err) => {
         console.error('❌ Database connection error:', err);
     });
 
 // --- Routes ---
+const adminRoutes = require('./routes/adminRoutes');
+app.use('/api/admin', adminRoutes);
+
 const authRoutes = require('./routes/auth');
 app.use('/api/auth', authRoutes);
 
@@ -130,6 +137,10 @@ app.use('/api/notifications', notificationRoutes);
 // Course Routes (Phase 3 — FR-5)
 const courseRoutes = require('./routes/courses');
 app.use('/api/courses', courseRoutes);
+
+// Assignment Routes (Evaluation Module)
+const assignmentRoutes = require('./routes/assignments');
+app.use('/api/assignments', assignmentRoutes);
 
 // Message Routes (Real-Time In-App Messaging — FR-9)
 const messageRoutes = require('./routes/messages');
