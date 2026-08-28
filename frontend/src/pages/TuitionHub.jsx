@@ -37,8 +37,6 @@ export default function TuitionHub() {
     const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
     const [isBuyTokensModalOpen, setIsBuyTokensModalOpen] = useState(false);
     const [selectedPostToApply, setSelectedPostToApply] = useState(null);
-    const [hubTab, setHubTab] = useState('jobs');
-    const [myApplications, setMyApplications] = useState([]);
 
     // NFR-1: Backend-driven filtering — passes active filters as query params
     // so MongoDB uses indexes instead of filtering in JS on the client.
@@ -70,9 +68,9 @@ export default function TuitionHub() {
                 setPosts([]);
             }
 
-            // Fetch token balance only for instructors (tokens are tutor-only)
-            if (user.role === 'instructor') {
-                const tokenRes = await axios.get(`http://localhost:5000/api/wallet/tokens/${user._id || user.id || '650000000000000000000002'}`);
+            // Fetch token balance only for students (students apply to tutor and post jobs)
+            if (user.role === 'student') {
+                const tokenRes = await axios.get(`http://localhost:5000/api/wallet/tokens/${user._id || user.id}`);
                 if (tokenRes.data.tokens !== undefined) {
                     setTokens(tokenRes.data.tokens);
                 }
@@ -80,9 +78,9 @@ export default function TuitionHub() {
                 setTokens(0);
             }
 
-            // Fetch applied posts if user is instructor
-            if (user.role === 'instructor') {
-                const appRes = await axios.get(`http://localhost:5000/api/applications/my-applications?tutorId=${user._id || user.id || '650000000000000000000002'}`);
+            // Fetch applied posts if user is student
+            if (user.role === 'student') {
+                const appRes = await axios.get(`http://localhost:5000/api/applications/my-applications?tutorId=${user._id || user.id}`);
                 setAppliedPosts(appRes.data);
             }
         } catch (error) {
@@ -105,16 +103,6 @@ export default function TuitionHub() {
     const handleApplicationSuccess = (postId) => {
         setAppliedPosts(prev => [...prev, postId]);
         setTokens(prev => Math.max(0, prev - 1));
-    };
-
-    const loadMyApplications = async () => {
-        if (!user._id && !user.id) return;
-        try {
-            const res = await axios.get(`http://localhost:5000/api/applications/tutor/${user._id || user.id}`);
-            setMyApplications(res.data);
-        } catch (error) {
-            console.error('Failed to load my applications:', error);
-        }
     };
 
     // Client-side filters for fields that don't go to backend
@@ -194,7 +182,7 @@ export default function TuitionHub() {
                         Posted by: <span className="font-bold">{post.studentName || 'Student'}</span>
                     </div>
 
-                    {user.role === 'instructor' ? (
+                    {user.role === 'student' ? (
                         appliedPosts.includes(post._id) ? (
                             <button 
                                 disabled
@@ -218,7 +206,7 @@ export default function TuitionHub() {
                         )
                     ) : (
                         <span className="text-xs font-bold text-gray-400 italic bg-gray-100 dark:bg-gray-800 px-3 py-1.5 rounded-lg">
-                            Switch to Tutor to apply
+                            Instructors cannot apply
                         </span>
                     )}
                 </div>
@@ -239,8 +227,8 @@ export default function TuitionHub() {
                     </div>
 
                     <div className="flex flex-wrap items-center gap-4">
-                        {/* Token Wallet Badge — Tutors only */}
-                        {user.role === 'instructor' && (
+                        {/* Token Wallet Badge — Students only */}
+                        {user.role === 'student' && (
                             <button 
                                 onClick={() => setIsBuyTokensModalOpen(true)} 
                                 className="flex items-center gap-3 bg-amber-500/10 border border-amber-500/30 px-4 py-2 rounded-xl hover:bg-amber-500/20 transition-colors"
@@ -434,74 +422,12 @@ export default function TuitionHub() {
                         </div>
                     </aside>
 
-                    {/* Instructor Tabs */}
-                    {user.role === 'instructor' && (
-                        <div className="flex gap-4 mb-6">
-                            <button
-                                onClick={() => { setHubTab('jobs'); loadData({ subject, area, minSalary, maxSalary, sortBy }); }}
-                                className={`pb-3 px-4 font-bold text-sm transition-all border-b-2 ${hubTab === 'jobs' ? 'border-blue-500 text-blue-600 dark:text-blue-400' : 'border-transparent text-gray-500 hover:text-gray-700 dark:hover:text-gray-300'}`}
-                            >
-                                🔍 Browse Jobs
-                            </button>
-                            <button
-                                onClick={() => { setHubTab('my-applications'); loadMyApplications(); }}
-                                className={`pb-3 px-4 font-bold text-sm transition-all border-b-2 ${hubTab === 'my-applications' ? 'border-blue-500 text-blue-600 dark:text-blue-400' : 'border-transparent text-gray-500 hover:text-gray-700 dark:hover:text-gray-300'}`}
-                            >
-                                📩 My Applications
-                            </button>
-                        </div>
-                    )}
-
                     {/* Tuition Post Cards Feed */}
                     <section className="w-full lg:w-3/4 space-y-6">
-                        {user.role === 'instructor' && hubTab === 'my-applications' ? (
-                            <>
-                                <div className="flex justify-between items-center bg-white dark:bg-[#111827] px-6 py-4 rounded-2xl border border-gray-200 dark:border-gray-800 shadow-sm">
-                                    <div className="text-sm font-bold text-gray-600 dark:text-gray-400">
-                                        Showing <span className="text-blue-600 dark:text-blue-400 font-extrabold">{myApplications.length}</span> applications
-                                    </div>
-                                </div>
-                                
-                                {myApplications.length === 0 ? (
-                                    <div className="bg-white dark:bg-[#111827] border border-gray-200 dark:border-gray-800 rounded-2xl p-12 text-center text-gray-500">
-                                        <h4 className="text-xl font-bold">No Applications Yet</h4>
-                                        <p className="text-sm mt-2">Browse jobs and apply to see your applications here.</p>
-                                        <button onClick={() => setHubTab('jobs')} className="mt-4 bg-blue-600 text-white font-bold px-6 py-2 rounded-xl">Browse Jobs</button>
-                                    </div>
-                                ) : (
-                                    myApplications.map(app => (
-                                        <div key={app._id} className="bg-white dark:bg-[#111827] border border-gray-200 dark:border-gray-800 rounded-2xl p-6 shadow-md">
-                                            <div className="flex justify-between items-start mb-3">
-                                                <div>
-                                                    <h3 className="text-xl font-extrabold text-gray-900 dark:text-white">{app.postId?.title || 'Unknown Job'}</h3>
-                                                    <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">📍 {app.postId?.location?.area}, {app.postId?.location?.district}</p>
-                                                </div>
-                                                <span className={`px-3 py-1 text-xs font-bold rounded-full ${
-                                                    app.status === 'Accepted' ? 'bg-green-100 text-green-700' :
-                                                    app.status === 'Rejected' ? 'bg-red-100 text-red-700' :
-                                                    'bg-yellow-100 text-yellow-700'
-                                                }`}>
-                                                    {app.status}
-                                                </span>
-                                            </div>
-                                            <div className="flex justify-between items-center">
-                                                <div className="text-sm text-gray-600 dark:text-gray-400">
-                                                    Budget: <span className="font-extrabold text-blue-600">৳{app.postId?.salary?.toLocaleString()}</span>/Month
-                                                </div>
-                                                <div className="text-xs text-gray-400">
-                                                    Applied on {new Date(app.createdAt).toLocaleDateString()}
-                                                </div>
-                                            </div>
-                                        </div>
-                                    ))
-                                )}
-                            </>
-                        ) : (
-                            <>
-                                <div className="flex justify-between items-center bg-white dark:bg-[#111827] px-6 py-4 rounded-2xl border border-gray-200 dark:border-gray-800 shadow-sm">
-                                    <div className="text-sm font-bold text-gray-600 dark:text-gray-400">
-                                        Showing <span className="text-blue-600 dark:text-blue-400 font-extrabold">{displayedPosts.length}</span> tuition job listings
-                                    </div>
+                        <div className="flex justify-between items-center bg-white dark:bg-[#111827] px-6 py-4 rounded-2xl border border-gray-200 dark:border-gray-800 shadow-sm">
+                            <div className="text-sm font-bold text-gray-600 dark:text-gray-400">
+                                Showing <span className="text-blue-600 dark:text-blue-400 font-extrabold">{displayedPosts.length}</span> tuition job listings
+                            </div>
                             <div className="flex items-center gap-2">
                                 <label className="text-xs font-bold text-gray-500 uppercase">Sort By:</label>
                                 <select 
@@ -517,9 +443,7 @@ export default function TuitionHub() {
                         </div>
 
                         {postContent}
-                        </>
-                    )}
-                </section>
+                    </section>
                 </div>
             </main>
 

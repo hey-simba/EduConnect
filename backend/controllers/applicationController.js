@@ -22,8 +22,8 @@ const applyForTuition = async (req, res) => {
         if (!tutor) {
             throw new Error('Tutor not found');
         }
-        if (tutor.role !== 'instructor') {
-            throw new Error('Only instructors can apply');
+        if (tutor.role !== 'student') {
+            throw new Error('Only students can apply to tuition jobs.');
         }
         if (tutor.tokens < 1) {
             throw new Error('Insufficient tokens. Please buy more tokens to apply.');

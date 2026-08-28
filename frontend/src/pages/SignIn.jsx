@@ -25,14 +25,8 @@ export default function SignIn() {
         localStorage.setItem('token', response.data.token);
       }
       
-      // Navigate to a dashboard or homepage after successful login
-      if (response.data.user.role === 'admin') {
-        navigate('/admin-dashboard');
-      } else if (response.data.user.role === 'instructor') {
-        navigate('/instructor-dashboard');
-      } else {
-        navigate('/student-dashboard'); // Students go straight to their dashboard now
-      }
+      // Unconditionally redirect to home page after login for everyone
+      navigate('/home');
       
     } catch (error) {
       console.error(error);

@@ -9,11 +9,28 @@ export default function StudentDashboard() {
   const [applications, setApplications] = useState([]);
   const [loading, setLoading] = useState(false);
 
-  const enrolledCourses = [
-    { id: 1, title: 'Advanced Operating Systems', progress: 75, instructor: 'Dr. Alan Turing' },
-    { id: 2, title: 'Discrete Mathematics Foundations', progress: 30, instructor: 'Prof. Ada Lovelace' },
-    { id: 3, title: 'Web Development Bootcamp', progress: 100, instructor: 'Sarah Connor' },
-  ];
+  const [enrolledCourses, setEnrolledCourses] = useState([]);
+
+  useEffect(() => {
+    const fetchCourses = async () => {
+      if (!user._id && !user.id) return;
+      try {
+        setLoading(true);
+        const res = await axios.get(`http://localhost:5000/api/courses/enrollments/${user._id || user.id}`);
+        // Map backend format to UI format
+        const courses = res.data.map(enrollment => ({
+          ...enrollment.courseId,
+          progress: 0 // Mock progress bar for now since video tracking isn't done
+        }));
+        setEnrolledCourses(courses);
+      } catch (err) {
+        console.error('Failed to fetch enrolled courses:', err);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchCourses();
+  }, []);
 
   const loadApplications = async () => {
     if (!user._id && !user.id) return;
@@ -71,7 +88,7 @@ export default function StudentDashboard() {
             onClick={() => setActiveTab('profile')}
             className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl font-medium transition-all ${activeTab === 'profile' ? 'bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400' : 'text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800'}`}
           >
-            ⚙️ Profile Settings
+            ⚙️ Profile & Wallet
           </button>
         </nav>
 
@@ -89,7 +106,7 @@ export default function StudentDashboard() {
       <main className="flex-1 ml-64 p-8 lg:p-12">
         <header className="flex justify-between items-center mb-10">
           <div>
-            <h2 className="text-3xl font-bold tracking-tight">Welcome back, {user.name || 'Student'}! 👋</h2>
+            <h2 className="text-3xl font-bold tracking-tight">Welcome back, {user.name}! 👋</h2>
             <p className="text-gray-500 dark:text-gray-400 mt-1">Ready to continue your learning journey?</p>
           </div>
           <div className="w-12 h-12 rounded-full bg-blue-100 dark:bg-blue-900/50 border-2 border-blue-500 flex items-center justify-center text-xl shadow-sm">
@@ -97,7 +114,6 @@ export default function StudentDashboard() {
           </div>
         </header>
 
-        {/* Tab Content Rendering */}
         {activeTab === 'courses' && (
           <section className="animate-fade-in">
             <h3 className="text-xl font-bold mb-6 flex items-center gap-2">
@@ -105,29 +121,48 @@ export default function StudentDashboard() {
               Enrolled Masterclasses
             </h3>
             
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {enrolledCourses.map(course => (
-                <div key={course.id} className="bg-white dark:bg-[#111827] rounded-2xl p-6 shadow-sm border border-gray-100 dark:border-gray-800 hover:shadow-md transition-shadow group cursor-pointer">
-                  <div className="w-full h-40 bg-gray-100 dark:bg-[#1F2937] rounded-xl mb-4 flex items-center justify-center text-4xl group-hover:scale-[1.02] transition-transform">
-                    {course.progress === 100 ? '🏆' : '💻'}
-                  </div>
-                  <h4 className="font-bold text-lg leading-tight mb-2">{course.title}</h4>
-                  <p className="text-sm text-gray-500 dark:text-gray-400 mb-4">with {course.instructor}</p>
-                  
-                  {/* Progress Bar */}
-                  <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2.5 mb-2">
-                    <div 
-                      className={`h-2.5 rounded-full ${course.progress === 100 ? 'bg-green-500' : 'bg-blue-600 dark:bg-blue-500'}`} 
-                      style={{ width: `${course.progress}%` }}
-                    ></div>
-                  </div>
-                  <div className="flex justify-between text-xs font-semibold text-gray-500 dark:text-gray-400">
-                    <span>{course.progress}% Complete</span>
-                    <span>{course.progress === 100 ? 'Finished' : 'In Progress'}</span>
-                  </div>
-                </div>
-              ))}
-            </div>
+            {loading ? (
+              <p className="text-gray-500">Loading your courses...</p>
+            ) : enrolledCourses.length === 0 ? (
+              <div className="bg-white dark:bg-[#111827] rounded-2xl p-10 text-center shadow-sm border border-gray-200 dark:border-gray-800 flex flex-col items-center">
+                <span className="text-5xl mb-4">🛒</span>
+                <h4 className="text-xl font-bold mb-2">No courses yet!</h4>
+                <p className="text-gray-500 dark:text-gray-400 mb-6">Explore our catalog and find the perfect course to level up your skills.</p>
+                <Link to="/courses" className="bg-blue-600 text-white px-6 py-3 rounded-xl font-bold hover:bg-blue-700 transition-colors">
+                  Browse Courses
+                </Link>
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {enrolledCourses.map(course => (
+                  <Link to={`/course/${course._id}`} key={course._id} className="bg-white dark:bg-[#111827] rounded-2xl p-6 shadow-sm border border-gray-100 dark:border-gray-800 hover:shadow-md transition-shadow group cursor-pointer block">
+                    <div className="w-full h-40 bg-gray-100 dark:bg-[#1F2937] rounded-xl mb-4 overflow-hidden relative">
+                      {course.thumbnail ? (
+                        <img src={course.thumbnail} alt={course.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
+                      ) : (
+                        <div className="w-full h-full flex items-center justify-center text-4xl group-hover:scale-[1.02] transition-transform">💻</div>
+                      )}
+                      <div className="absolute top-2 right-2 bg-black/60 backdrop-blur text-white text-xs font-bold px-2 py-1 rounded">
+                        {course.category}
+                      </div>
+                    </div>
+                    <h4 className="font-bold text-lg leading-tight mb-2 group-hover:text-blue-600 transition-colors line-clamp-1">{course.title}</h4>
+                    <p className="text-sm text-gray-500 dark:text-gray-400 mb-4">with {course.instructorName}</p>
+                    
+                    <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2.5 mb-2">
+                      <div 
+                        className={`h-2.5 rounded-full ${course.progress === 100 ? 'bg-green-500' : 'bg-blue-600 dark:bg-blue-500'}`} 
+                        style={{ width: `${course.progress}%` }}
+                      ></div>
+                    </div>
+                    <div className="flex justify-between text-xs font-semibold text-gray-500 dark:text-gray-400">
+                      <span>{course.progress}% Complete</span>
+                      <span>{course.progress === 100 ? 'Finished' : 'In Progress'}</span>
+                    </div>
+                  </Link>
+                ))}
+              </div>
+            )}
           </section>
         )}
 
@@ -205,9 +240,56 @@ export default function StudentDashboard() {
         )}
         
         {activeTab === 'profile' && (
-          <div className="flex flex-col items-center justify-center h-64 text-gray-500 dark:text-gray-400 animate-fade-in">
-            <span className="text-4xl mb-4">⚙️</span>
-            <p>Profile settings module goes here.</p>
+          <div className="animate-fade-in w-full max-w-6xl">
+            <h3 className="text-xl font-bold mb-6 flex items-center gap-2">
+              <span className="w-2 h-6 bg-blue-500 rounded-full"></span>
+              Profile & Wallet Settings
+            </h3>
+            
+            <div className="bg-white dark:bg-[#111827] rounded-2xl shadow-sm border border-gray-200 dark:border-gray-800 p-8 mb-8 flex flex-col md:flex-row gap-8 items-center md:items-start w-full">
+              <div className="w-24 h-24 rounded-full bg-blue-100 text-blue-600 dark:bg-blue-900/50 dark:text-blue-400 flex items-center justify-center text-3xl font-bold shrink-0">
+                {user.name ? user.name.charAt(0).toUpperCase() : 'S'}
+              </div>
+              <div className="flex-1 text-center md:text-left">
+                <h4 className="text-2xl font-bold">{user.name || 'Student'}</h4>
+                <p className="text-gray-500 dark:text-gray-400">{user.email || 'No email provided'}</p>
+                <div className="mt-4 inline-flex items-center gap-2 bg-gray-100 dark:bg-gray-800 px-4 py-2 rounded-lg text-sm font-semibold">
+                  <span>Role:</span>
+                  <span className="uppercase text-blue-600 dark:text-blue-400">{user.role || 'student'}</span>
+                </div>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              {/* Wallet Card */}
+              <div className="bg-gradient-to-br from-blue-600 to-cyan-500 rounded-2xl shadow-lg p-6 text-white relative overflow-hidden">
+                <div className="absolute -right-4 -top-4 w-24 h-24 bg-white/10 rounded-full blur-xl pointer-events-none"></div>
+                <h4 className="text-blue-100 font-semibold mb-1">My Token Wallet</h4>
+                <div className="text-4xl font-extrabold mb-4">{user.tokens || 0} <span className="text-xl font-medium opacity-80">Tokens</span></div>
+                <p className="text-sm text-blue-100 mb-6">Use tokens to post in the Tuition Hub or buy specialized courses.</p>
+                <button className="bg-white text-blue-600 px-5 py-2 rounded-xl font-bold text-sm hover:bg-gray-50 transition-colors w-full shadow-sm">
+                  Top Up Wallet
+                </button>
+              </div>
+
+              {/* Edit Profile Form Shell */}
+              <div className="bg-white dark:bg-[#111827] rounded-2xl shadow-sm border border-gray-200 dark:border-gray-800 p-6">
+                <h4 className="font-bold text-lg mb-4">Update Details</h4>
+                <div className="space-y-4">
+                  <div>
+                    <label className="text-xs font-semibold text-gray-500 uppercase">Full Name</label>
+                    <input type="text" defaultValue={user.name} className="w-full mt-1 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg px-4 py-2 outline-none focus:border-blue-500" />
+                  </div>
+                  <div>
+                    <label className="text-xs font-semibold text-gray-500 uppercase">Email Address</label>
+                    <input type="email" defaultValue={user.email} disabled className="w-full mt-1 bg-gray-100 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-lg px-4 py-2 text-gray-400 cursor-not-allowed" />
+                  </div>
+                  <button className="w-full bg-gray-900 dark:bg-white text-white dark:text-gray-900 font-bold py-2 rounded-lg hover:opacity-90 transition-opacity">
+                    Save Changes
+                  </button>
+                </div>
+              </div>
+            </div>
           </div>
         )}
 

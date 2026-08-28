@@ -107,16 +107,15 @@ export default function CreateCourse() {
                         Course Submitted! 🎉
                     </h2>
 
-                    <p className="text-gray-600 text-lg mb-2">
-                        Thank you for your course submission.
+                    <p className="text-gray-600 text-lg mb-4">
+                        Thank you for your submission. We will get back to you.
                     </p>
 
                     <div className="bg-blue-50 border border-blue-100 rounded-xl p-4 mb-8 text-left">
                         <p className="text-blue-800 text-sm font-medium flex items-start gap-2">
                             <span className="mt-0.5">🔔</span>
                             <span>
-                                Our admin team will review your course content and notify you once it has been <strong>approved</strong>. 
-                                Your course will go live on EduConnect immediately after approval.
+                                The course will be published soon after when the admin approves your course.
                             </span>
                         </p>
                     </div>
@@ -167,12 +166,46 @@ export default function CreateCourse() {
                             <textarea name="description" value={formData.description} onChange={handleFormChange} required className="w-full p-2 border rounded" rows="4" placeholder="What will students learn?"></textarea>
                         </div>
                         <div>
-                            <label className="block text-sm font-medium mb-1">Price (in Tokens/BDT) *</label>
+                            <label className="block text-sm font-medium mb-1">Price (Tk) *</label>
                             <input type="number" name="price" value={formData.price} onChange={handleFormChange} required className="w-full p-2 border rounded" placeholder="e.g. 1500" min="0" />
                         </div>
                         <div>
-                            <label className="block text-sm font-medium mb-1">Thumbnail URL</label>
-                            <input type="text" name="thumbnail" value={formData.thumbnail} onChange={handleFormChange} className="w-full p-2 border rounded" placeholder="https://..." />
+                            <label className="block text-sm font-medium mb-1">Thumbnail Image *</label>
+                            <input type="file" accept="image/*" onChange={(e) => {
+                                const file = e.target.files[0];
+                                if (!file) return;
+                                const reader = new FileReader();
+                                reader.onload = (event) => {
+                                    const img = new Image();
+                                    img.onload = () => {
+                                        const canvas = document.createElement('canvas');
+                                        const ctx = canvas.getContext('2d');
+                                        const targetRatio = 16 / 9;
+                                        let width = img.width;
+                                        let height = img.height;
+                                        const imgRatio = width / height;
+                                        let sourceX = 0, sourceY = 0, sourceWidth = width, sourceHeight = height;
+                                        
+                                        if (imgRatio > targetRatio) {
+                                            sourceWidth = height * targetRatio;
+                                            sourceX = (width - sourceWidth) / 2;
+                                        } else if (imgRatio < targetRatio) {
+                                            sourceHeight = width / targetRatio;
+                                            sourceY = (height - sourceHeight) / 2;
+                                        }
+
+                                        canvas.width = Math.min(1280, sourceWidth);
+                                        canvas.height = canvas.width / targetRatio;
+                                        ctx.drawImage(img, sourceX, sourceY, sourceWidth, sourceHeight, 0, 0, canvas.width, canvas.height);
+                                        
+                                        // Save as WebP
+                                        setFormData({ ...formData, thumbnail: canvas.toDataURL('image/webp', 0.8) });
+                                    };
+                                    img.src = event.target.result;
+                                };
+                                reader.readAsDataURL(file);
+                            }} required={!formData.thumbnail} className="w-full p-2 border rounded bg-white text-sm" />
+                            {formData.thumbnail && <img src={formData.thumbnail} alt="Preview" className="mt-2 h-20 rounded shadow" />}
                         </div>
                         <div>
                             <label className="block text-sm font-medium mb-1">Category</label>
@@ -217,6 +250,9 @@ export default function CreateCourse() {
                 {/* 3. Curriculum / Videos */}
                 <div className="bg-gray-50 p-4 rounded-lg border border-gray-200">
                     <h2 className="text-xl font-semibold mb-4 text-gray-700">3. Curriculum (YouTube Links)</h2>
+                    <div className="mb-4 text-sm text-gray-600 bg-blue-50 p-3 rounded border border-blue-200">
+                        <strong>Note:</strong> All videos will be locked by default. Students must purchase the course via SSL Commerz to unlock them.
+                    </div>
                     <div className="mb-4">
                         <label className="block text-sm font-medium mb-1">Main Playlist URL (Optional)</label>
                         <input type="text" name="playlistUrl" value={formData.playlistUrl} onChange={handleFormChange} className="w-full p-2 border rounded" placeholder="https://youtube.com/playlist?list=..." />
@@ -229,21 +265,13 @@ export default function CreateCourse() {
                                     <button type="button" onClick={() => removeVideoRow(index)} className="absolute top-2 right-2 text-red-500 hover:text-red-700 font-bold">X</button>
                                 )}
                                 <div className="grid grid-cols-1 md:grid-cols-12 gap-3 items-center">
-                                    <div className="md:col-span-4">
+                                    <div className="md:col-span-5">
                                         <label className="block text-xs font-medium text-gray-500 mb-1">Video Title</label>
                                         <input type="text" required value={video.title} onChange={(e) => handleVideoChange(index, 'title', e.target.value)} className="w-full p-2 border rounded text-sm" placeholder="e.g. 1. Introduction" />
                                     </div>
-                                    <div className="md:col-span-5">
+                                    <div className="md:col-span-7">
                                         <label className="block text-xs font-medium text-gray-500 mb-1">YouTube Video URL</label>
                                         <input type="url" required value={video.youtubeUrl} onChange={(e) => handleVideoChange(index, 'youtubeUrl', e.target.value)} className="w-full p-2 border rounded text-sm" placeholder="https://youtube.com/watch?v=..." />
-                                    </div>
-                                    <div className="md:col-span-3">
-                                        <label className="block text-xs font-medium text-gray-500 mb-1">Access</label>
-                                        <label className="inline-flex items-center cursor-pointer">
-                                            <input type="checkbox" checked={video.isPreview} onChange={(e) => handleVideoChange(index, 'isPreview', e.target.checked)} className="sr-only peer" />
-                                            <div className="relative w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-green-600"></div>
-                                            <span className="ms-3 text-sm font-medium text-gray-900">{video.isPreview ? 'Free Preview' : 'Locked'}</span>
-                                        </label>
                                     </div>
                                 </div>
                             </div>

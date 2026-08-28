@@ -15,7 +15,10 @@ const enrollmentSchema = new mongoose.Schema({
     },
     // Track the token price paid at time of purchase (price can change later)
     tokensPaid: { type: Number, required: true },
-    enrolledAt: { type: Date, default: Date.now }
+    enrolledAt: { type: Date, default: Date.now },
+    // NEW: Progress tracking
+    watchedVideos: [{ type: String }], // Array of YouTube URLs that were watched
+    certificateClaimed: { type: Boolean, default: false }
 }, { timestamps: true });
 
 // Prevent duplicate enrollments

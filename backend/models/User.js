@@ -22,10 +22,32 @@ const userSchema = new mongoose.Schema({
         enum: ['student', 'instructor', 'admin'],
         default: 'student'
     },
-    // NEW: Tokens field to allow students to post in the Tuition Hub
+    accountStatus: {
+        type: String,
+        enum: ['Approved', 'Pending', 'Rejected'],
+        default: 'Approved' // Instructors will explicitly be set to Pending on creation
+    },
+    cvLink: {
+        type: String,
+        trim: true
+    },
     tokens: {
         type: Number,
         default: 0 // Users start with 0 tokens and can buy more
+    },
+    // NEW: Instructor specific fields
+    description: {
+        type: String,
+        default: '',
+        trim: true
+    },
+    totalEarnings: {
+        type: Number,
+        default: 0
+    },
+    availableBalance: {
+        type: Number,
+        default: 0
     }
 }, {
     timestamps: true // This automatically adds 'createdAt' and 'updatedAt' fields

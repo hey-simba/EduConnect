@@ -18,8 +18,8 @@ export default function ApplyTuitionModal({ isOpen, onClose, post, userTokens, u
             return;
         }
 
-        if (user.role !== 'instructor') {
-            setError('Only instructors can apply. Please switch to Tutor mode in the Tuition Hub.');
+        if (user.role !== 'student') {
+            setError('Only students can apply to tuition jobs.');
             return;
         }
 

@@ -19,6 +19,7 @@ const LandingPage = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
+  const [cvLink, setCvLink] = useState('');
   
   // UI States
   const [showPassword, setShowPassword] = useState(false);
@@ -61,6 +62,7 @@ const LandingPage = () => {
     setEmail('');
     setPassword('');
     setConfirmPassword('');
+    setCvLink('');
     setShowPassword(false);
     setShowConfirmPassword(false);
     setEmailError('');
@@ -95,15 +97,8 @@ const LandingPage = () => {
           return;
         }
 
-        // Read the role from localStorage (set by authService) and route correctly
-        const loggedInUser = JSON.parse(localStorage.getItem('user'));
-        if (loggedInUser?.role === 'admin') {
-          navigate('/admin-dashboard');
-        } else if (loggedInUser?.role === 'instructor') {
-          navigate('/instructor-dashboard');
-        } else {
-          navigate('/student-dashboard');
-        }
+        // Unconditionally redirect to home page after login for everyone
+        navigate('/home');
       } catch (error) {
         setEmailError('Could not connect to the server. Is your backend running?');
       }
@@ -115,7 +110,7 @@ const LandingPage = () => {
       if (!allCriteriaMet || !passwordsMatch) return;
       
       try {
-        const result = await registerUser(name, email, password, role); // Calling the Service Layer
+        const result = await registerUser(name, email, password, role, cvLink); // Calling the Service Layer
 
         if (!result.ok) {
           setEmailError(result.data.message || 'Failed to create account.');
@@ -278,7 +273,7 @@ const LandingPage = () => {
                   )}
                   
                   {!isLoginView && !isForgotPasswordView && role === 'instructor' && (
-                    <><div className="relative"><select defaultValue="" required className="w-full px-5 py-4 rounded-xl text-lg bg-gray-50 dark:bg-[#1F2937] border border-gray-200 dark:border-gray-700 focus:ring-4 focus:ring-blue-500/20 dark:focus:ring-blue-500/30 focus:border-blue-500 dark:focus:border-blue-500 outline-none transition-all dark:text-white appearance-none cursor-pointer"><option value="" disabled>Select Area of Expertise</option><option value="computer_science">Computer Science & Tech</option><option value="business">Business & Marketing</option><option value="arts">Design & Arts</option><option value="sciences">Mathematics & Science</option><option value="languages">Languages</option><option value="other">Other</option></select><div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-5 text-gray-500 dark:text-gray-400"><svg className="fill-current h-4 w-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20"><path d="M9.293 12.95l.707.707L15.657 8l-1.414-1.414L10 10.828 5.757 6.586 4.343 8z"/></svg></div></div><input type="url" placeholder="LinkedIn or Portfolio URL" required className="w-full px-5 py-4 rounded-xl text-lg bg-gray-50 dark:bg-[#1F2937] border border-gray-200 dark:border-gray-700 focus:ring-4 focus:ring-blue-500/20 dark:focus:ring-blue-500/30 focus:border-blue-500 dark:focus:border-blue-500 outline-none transition-all dark:text-white" /></>
+                    <><div className="relative"><select defaultValue="" required className="w-full px-5 py-4 rounded-xl text-lg bg-gray-50 dark:bg-[#1F2937] border border-gray-200 dark:border-gray-700 focus:ring-4 focus:ring-blue-500/20 dark:focus:ring-blue-500/30 focus:border-blue-500 dark:focus:border-blue-500 outline-none transition-all dark:text-white appearance-none cursor-pointer"><option value="" disabled>Select Area of Expertise</option><option value="computer_science">Computer Science & Tech</option><option value="business">Business & Marketing</option><option value="arts">Design & Arts</option><option value="sciences">Mathematics & Science</option><option value="languages">Languages</option><option value="other">Other</option></select><div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-5 text-gray-500 dark:text-gray-400"><svg className="fill-current h-4 w-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20"><path d="M9.293 12.95l.707.707L15.657 8l-1.414-1.414L10 10.828 5.757 6.586 4.343 8z"/></svg></div></div><input type="url" placeholder="LinkedIn or Portfolio URL" required value={cvLink} onChange={(e) => setCvLink(e.target.value)} className="w-full px-5 py-4 rounded-xl text-lg bg-gray-50 dark:bg-[#1F2937] border border-gray-200 dark:border-gray-700 focus:ring-4 focus:ring-blue-500/20 dark:focus:ring-blue-500/30 focus:border-blue-500 dark:focus:border-blue-500 outline-none transition-all dark:text-white" /></>
                   )}
 
                   {isLoginView && !isForgotPasswordView && (

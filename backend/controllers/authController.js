@@ -5,7 +5,7 @@ const User = require('../models/User');
 // POST: Register a new user
 const registerUser = async (req, res) => {
     try {
-        const { name, email, password, role } = req.body;
+        const { name, email, password, role, cvLink } = req.body;
 
         // 1. Check if a user with this email already exists
         const existingUser = await User.findOne({ email });
@@ -13,16 +13,24 @@ const registerUser = async (req, res) => {
             return res.status(400).json({ message: 'User already exists with this email' });
         }
 
+        // Prevent hacking admin role
+        if (role === 'admin') {
+            return res.status(403).json({ message: 'Cannot register as admin' });
+        }
+
         // 2. Hash the password securely
         const salt = await bcrypt.genSalt(10);
         const hashedPassword = await bcrypt.hash(password, salt);
 
         // 3. Create the new user object
+        const isInstructor = role === 'instructor';
         const newUser = new User({
             name,
             email,
             password: hashedPassword,
-            role: role || 'student'
+            role: role || 'student',
+            accountStatus: isInstructor ? 'Pending' : 'Approved',
+            cvLink: isInstructor ? cvLink : ''
         });
 
         // 4. Save the user to MongoDB Atlas
@@ -52,7 +60,15 @@ const loginUser = async (req, res) => {
             return res.status(400).json({ message: 'Invalid email or password' });
         }
 
-        // 3. Generate a JWT Token
+        // 3. Prevent login if the instructor is still pending approval
+        if (user.accountStatus === 'Pending') {
+            return res.status(403).json({ message: 'Your account is still under review by the Admin. Please wait for the confirmation email.' });
+        }
+        if (user.accountStatus === 'Rejected') {
+            return res.status(403).json({ message: 'Your application to become an instructor was not approved.' });
+        }
+
+        // 4. Generate a JWT Token
         const payload = { userId: user._id };
         const token = jwt.sign(payload, process.env.JWT_SECRET, { expiresIn: '7d' });
 
