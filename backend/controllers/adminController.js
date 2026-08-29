@@ -1,20 +1,41 @@
 const User = require('../models/User');
 const nodemailer = require('nodemailer');
 
-// Setup nodemailer transporter
-const transporter = nodemailer.createTransport({
-    service: 'gmail',
-    auth: {
-        user: process.env.EMAIL_USER,
-        pass: process.env.EMAIL_PASS
+let transporter;
+
+// Auto-configure Nodemailer (Use Ethereal for local testing if .env is not set up)
+const setupTransporter = async () => {
+    if (!process.env.EMAIL_USER || process.env.EMAIL_USER === 'your_email@gmail.com') {
+        console.log('⚙️ No real email credentials found in .env. Generating Ethereal test account...');
+        const testAccount = await nodemailer.createTestAccount();
+        transporter = nodemailer.createTransport({
+            host: "smtp.ethereal.email",
+            port: 587,
+            secure: false,
+            auth: {
+                user: testAccount.user,
+                pass: testAccount.pass,
+            },
+        });
+        console.log('✅ Ethereal Test Email account ready! (Emails will not go to real inboxes, but you can view them online)');
+    } else {
+        transporter = nodemailer.createTransport({
+            service: 'gmail',
+            auth: {
+                user: process.env.EMAIL_USER,
+                pass: process.env.EMAIL_PASS
+            }
+        });
+        console.log('✅ Real Gmail transporter ready!');
     }
-});
+};
+setupTransporter();
 
 // Helper function to send email
 const sendApprovalEmail = async (email, name, status) => {
     try {
-        if (!process.env.EMAIL_USER || !process.env.EMAIL_PASS) {
-            console.warn('⚠️ Nodemailer credentials not set in .env. Skipping email sending.');
+        if (!transporter) {
+            console.warn('⚠️ Nodemailer transporter not initialized yet. Skipping email sending.');
             return;
         }
 
@@ -26,13 +47,19 @@ const sendApprovalEmail = async (email, name, status) => {
             ? `Hello ${name},\n\nCongratulations! Your instructor account on EduConnect has been approved. You can now log in and start creating courses.\n\nBest Regards,\nThe EduConnect Team`
             : `Hello ${name},\n\nWe regret to inform you that your application to become an instructor on EduConnect has not been approved at this time.\n\nBest Regards,\nThe EduConnect Team`;
 
-        await transporter.sendMail({
-            from: process.env.EMAIL_USER,
+        const info = await transporter.sendMail({
+            from: process.env.EMAIL_USER === 'your_email@gmail.com' ? '"EduConnect Admin" <admin@educonnect.test>' : process.env.EMAIL_USER,
             to: email,
             subject,
             text
         });
-        console.log(`✉️ Notification email sent to ${email}`);
+        
+        console.log(`✉️ Notification email "sent" to ${email}`);
+        
+        // If using Ethereal, print the URL so the developer can actually see the email!
+        if (!process.env.EMAIL_USER || process.env.EMAIL_USER === 'your_email@gmail.com') {
+            console.log(`👀 Preview your email in the browser here: ${nodemailer.getTestMessageUrl(info)}`);
+        }
     } catch (error) {
         console.error('Error sending email:', error);
     }
