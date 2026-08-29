@@ -37,6 +37,7 @@ const assignmentRoutes = require("./routes/assignments");
 const messageRoutes = require("./routes/messages");
 const instructorRoutes = require("./routes/instructors");
 const liveClassRoutes = require("./routes/liveClasses");
+const userRoutes = require("./routes/users");
 
 // use the routes
 app.use("/api/auth", authRoutes);
@@ -50,6 +51,7 @@ app.use("/api/assignments", assignmentRoutes);
 app.use("/api/messages", messageRoutes);
 app.use("/api/instructors", instructorRoutes);
 app.use("/api/live-classes", liveClassRoutes);
+app.use("/api/users", userRoutes);
 
 // testing if server works
 app.get("/", function(req, res) {

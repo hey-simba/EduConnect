@@ -62,7 +62,7 @@ const applyForTuition = async (req, res) => {
             userId: post.studentId,
             type: 'NEW_APPLICANT',
             message: `${tutor.name} has applied to your post: ${post.title}`,
-            link: '/student-dashboard?tab=applications'
+            link: `/user/${tutorId}`
         });
         await initialMessage.save({ session });
 

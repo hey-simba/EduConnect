@@ -206,9 +206,9 @@ export default function StudentDashboard() {
                         <td className="p-4 font-medium text-gray-900 dark:text-white">{app.postId?.title || 'Unknown Post'}</td>
                         <td className="p-4 text-gray-600 dark:text-gray-300">
                           {app.tutorId?._id ? (
-                            <button onClick={() => handleMessageTutor(app.tutorId._id || app.tutorId)} className="text-blue-600 dark:text-blue-400 font-semibold hover:underline">
+                            <Link to={`/user/${app.tutorId._id}`} className="text-blue-600 dark:text-blue-400 font-semibold hover:underline">
                               {app.tutorId?.name || 'Unknown Student'}
-                            </button>
+                            </Link>
                           ) : (
                             <span className="text-gray-500">Unknown Student</span>
                           )}
