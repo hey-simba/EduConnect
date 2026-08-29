@@ -1,42 +1,26 @@
 const User = require('../models/User');
 const nodemailer = require('nodemailer');
 
-let transporter;
-
-// Auto-configure Nodemailer (Use Ethereal for local testing if .env is not set up)
-const setupTransporter = async () => {
-    if (!process.env.EMAIL_USER || process.env.EMAIL_USER === 'your_email@gmail.com') {
-        console.log('⚙️ No real email credentials found in .env. Generating Ethereal test account...');
-        const testAccount = await nodemailer.createTestAccount();
-        transporter = nodemailer.createTransport({
-            host: "smtp.ethereal.email",
-            port: 587,
-            secure: false,
-            auth: {
-                user: testAccount.user,
-                pass: testAccount.pass,
-            },
-        });
-        console.log('✅ Ethereal Test Email account ready! (Emails will not go to real inboxes, but you can view them online)');
-    } else {
-        transporter = nodemailer.createTransport({
-            service: 'gmail',
-            auth: {
-                user: process.env.EMAIL_USER,
-                pass: process.env.EMAIL_PASS
-            }
-        });
-        console.log('✅ Real Gmail transporter ready!');
-    }
-};
-setupTransporter();
+// Transporter will be initialized dynamically inside the send function to ensure it catches .env updates
 
 // Helper function to send email
 const sendApprovalEmail = async (email, name, status) => {
     try {
-        if (!transporter) {
-            console.warn('⚠️ Nodemailer transporter not initialized yet. Skipping email sending.');
-            return;
+        let transporter;
+        if (!process.env.EMAIL_USER || process.env.EMAIL_USER === 'your_email@gmail.com') {
+            console.log('⚙️ No real email credentials found. Generating Ethereal test account...');
+            const testAccount = await nodemailer.createTestAccount();
+            transporter = nodemailer.createTransport({
+                host: "smtp.ethereal.email",
+                port: 587,
+                secure: false,
+                auth: { user: testAccount.user, pass: testAccount.pass },
+            });
+        } else {
+            transporter = nodemailer.createTransport({
+                service: 'gmail',
+                auth: { user: process.env.EMAIL_USER, pass: process.env.EMAIL_PASS }
+            });
         }
 
         const subject = status === 'Approved' 

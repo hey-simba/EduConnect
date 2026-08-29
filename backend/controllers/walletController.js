@@ -2,11 +2,9 @@ const User = require('../models/User');
 const Notification = require('../models/Notification');
 const SSLCommerzPayment = require('sslcommerz-lts');
 const mongoose = require('mongoose');
-require('dotenv').config();
+require('dotenv').config({ path: require('path').join(__dirname, '../.env') });
 
-const store_id = process.env.STORE_ID || 'testbox';
-const store_passwd = process.env.STORE_PASSWD || 'testpass@ssl';
-const is_live = false; // true for live, false for sandbox
+// Credentials will be loaded dynamically inside the function
 
 const getTokens = async (req, res) => {
     try {
@@ -19,6 +17,11 @@ const getTokens = async (req, res) => {
 };
 
 const initPayment = async (req, res) => {
+    console.log("== DEBUG: process.env.STORE_ID is ==", process.env.STORE_ID);
+    const store_id = process.env.STORE_ID || 'testbox';
+    const store_passwd = process.env.STORE_PASSWD || 'testpass@ssl';
+    const is_live = false; // true for live, false for sandbox
+
     const { userId, amount, email, name } = req.body; // Amount in BDT
     const tokenAmount = amount / 100; // e.g. 100 BDT = 1 token
     const tran_id = 'REF' + new Date().getTime();
