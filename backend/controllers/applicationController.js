@@ -34,6 +34,10 @@ const applyForTuition = async (req, res) => {
             throw new Error('Tuition post not found');
         }
 
+        if (post.studentId.toString() === tutorId) {
+            throw new Error('You cannot apply to your own tuition post.');
+        }
+
         const existingApplication = await Application.findOne({ postId, tutorId }).session(session);
         if (existingApplication) {
             throw new Error('You have already applied to this tuition');
@@ -58,7 +62,7 @@ const applyForTuition = async (req, res) => {
             userId: post.studentId,
             type: 'NEW_APPLICANT',
             message: `${tutor.name} has applied to your post: ${post.title}`,
-            link: `/messages?userId=${tutorId}`
+            link: '/student-dashboard?tab=applications'
         });
         await initialMessage.save({ session });
 

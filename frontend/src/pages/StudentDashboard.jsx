@@ -1,8 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 
 export default function StudentDashboard() {
+  const [searchParams] = useSearchParams();
   const [activeTab, setActiveTab] = useState('courses');
   const user = JSON.parse(localStorage.getItem('user')) || {};
   const navigate = useNavigate();
@@ -10,6 +11,13 @@ export default function StudentDashboard() {
   const [loading, setLoading] = useState(false);
 
   const [enrolledCourses, setEnrolledCourses] = useState([]);
+
+  useEffect(() => {
+    const tabFromUrl = searchParams.get('tab');
+    if (tabFromUrl === 'applications') {
+      setActiveTab('applications');
+    }
+  }, [searchParams]);
 
   useEffect(() => {
     const fetchCourses = async () => {
