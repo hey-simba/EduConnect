@@ -124,8 +124,67 @@ const rejectInstructor = async (req, res) => {
     }
 };
 
+// GET: Fetch all pending courses
+const getPendingCourses = async (req, res) => {
+    try {
+        const Course = require('../models/Course'); // Import dynamically if not at top
+        const pendingCourses = await Course.find({ approvalStatus: 'Pending' });
+        res.status(200).json(pendingCourses);
+    } catch (error) {
+        console.error('Error fetching pending courses:', error);
+        res.status(500).json({ message: 'Server error while fetching pending courses' });
+    }
+};
+
+// PUT: Approve a course
+const approveCourse = async (req, res) => {
+    try {
+        const { id } = req.params;
+        const Course = require('../models/Course');
+        const course = await Course.findByIdAndUpdate(
+            id,
+            { approvalStatus: 'Approved', isPublished: true },
+            { new: true }
+        );
+
+        if (!course) {
+            return res.status(404).json({ message: 'Course not found' });
+        }
+
+        res.status(200).json({ message: 'Course approved successfully', course });
+    } catch (error) {
+        console.error('Error approving course:', error);
+        res.status(500).json({ message: 'Server error while approving course' });
+    }
+};
+
+// PUT: Reject a course
+const rejectCourse = async (req, res) => {
+    try {
+        const { id } = req.params;
+        const Course = require('../models/Course');
+        const course = await Course.findByIdAndUpdate(
+            id,
+            { approvalStatus: 'Rejected', isPublished: false },
+            { new: true }
+        );
+
+        if (!course) {
+            return res.status(404).json({ message: 'Course not found' });
+        }
+
+        res.status(200).json({ message: 'Course rejected successfully', course });
+    } catch (error) {
+        console.error('Error rejecting course:', error);
+        res.status(500).json({ message: 'Server error while rejecting course' });
+    }
+};
+
 module.exports = {
     getPendingInstructors,
     approveInstructor,
-    rejectInstructor
+    rejectInstructor,
+    getPendingCourses,
+    approveCourse,
+    rejectCourse
 };

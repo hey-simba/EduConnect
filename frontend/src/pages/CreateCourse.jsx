@@ -91,7 +91,7 @@ export default function CreateCourse() {
         return <div className="text-center py-20 text-red-500 font-bold text-2xl">Access Denied. Only verified instructors can create courses.</div>;
     }
 
-    // ✅ SUCCESS SCREEN — shown after course is submitted
+  
     if (submitted) {
         return (
             <div className="min-h-screen bg-gray-50 flex items-center justify-center px-6">
@@ -269,9 +269,20 @@ export default function CreateCourse() {
                                         <label className="block text-xs font-medium text-gray-500 mb-1">Video Title</label>
                                         <input type="text" required value={video.title} onChange={(e) => handleVideoChange(index, 'title', e.target.value)} className="w-full p-2 border rounded text-sm" placeholder="e.g. 1. Introduction" />
                                     </div>
-                                    <div className="md:col-span-7">
+                                    <div className="md:col-span-4">
                                         <label className="block text-xs font-medium text-gray-500 mb-1">YouTube Video URL</label>
                                         <input type="url" required value={video.youtubeUrl} onChange={(e) => handleVideoChange(index, 'youtubeUrl', e.target.value)} className="w-full p-2 border rounded text-sm" placeholder="https://youtube.com/watch?v=..." />
+                                    </div>
+                                    <div className="md:col-span-3 flex flex-col justify-end mt-4 md:mt-0">
+                                        <label className="flex items-center gap-2 cursor-pointer bg-blue-50 hover:bg-blue-100 p-2 rounded border border-blue-200 transition-colors">
+                                            <input 
+                                                type="checkbox" 
+                                                checked={video.isPreview} 
+                                                onChange={(e) => handleVideoChange(index, 'isPreview', e.target.checked)} 
+                                                className="w-4 h-4 text-blue-600 rounded border-gray-300"
+                                            />
+                                            <span className="text-xs font-bold text-blue-800">Set as Free Preview</span>
+                                        </label>
                                     </div>
                                 </div>
                             </div>

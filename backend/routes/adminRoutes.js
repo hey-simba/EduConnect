@@ -1,16 +1,22 @@
 const express = require('express');
 const router = express.Router();
-const { getPendingInstructors, approveInstructor, rejectInstructor } = require('../controllers/adminController');
+const { 
+    getPendingInstructors, 
+    approveInstructor, 
+    rejectInstructor,
+    getPendingCourses,
+    approveCourse,
+    rejectCourse
+} = require('../controllers/adminController');
 
-// All paths map to /api/admin/...
-
-// Get list of pending instructors
+// Instructor routes
 router.get('/instructors/pending', getPendingInstructors);
-
-// Approve instructor
 router.put('/instructors/approve/:id', approveInstructor);
-
-// Reject instructor
 router.put('/instructors/reject/:id', rejectInstructor);
+
+// Course routes
+router.get('/courses/pending', getPendingCourses);
+router.put('/courses/approve/:id', approveCourse);
+router.put('/courses/reject/:id', rejectCourse);
 
 module.exports = router;

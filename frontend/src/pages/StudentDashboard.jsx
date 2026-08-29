@@ -1,8 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 
 export default function StudentDashboard() {
+  const [searchParams] = useSearchParams();
   const [activeTab, setActiveTab] = useState('courses');
   const user = JSON.parse(localStorage.getItem('user')) || {};
   const navigate = useNavigate();
@@ -12,16 +13,29 @@ export default function StudentDashboard() {
   const [enrolledCourses, setEnrolledCourses] = useState([]);
 
   useEffect(() => {
+    const tabFromUrl = searchParams.get('tab');
+    if (tabFromUrl === 'applications') {
+      setActiveTab('applications');
+    }
+  }, [searchParams]);
+
+  useEffect(() => {
     const fetchCourses = async () => {
       if (!user._id && !user.id) return;
       try {
         setLoading(true);
         const res = await axios.get(`http://localhost:5000/api/courses/enrollments/${user._id || user.id}`);
         // Map backend format to UI format
-        const courses = res.data.map(enrollment => ({
-          ...enrollment.courseId,
-          progress: 0 // Mock progress bar for now since video tracking isn't done
-        }));
+        const courses = res.data.map(enrollment => {
+          const totalVideos = enrollment.courseId?.videos?.length || 1;
+          const watched = enrollment.watchedVideos?.length || 0;
+          const calculatedProgress = Math.round((watched / totalVideos) * 100);
+
+          return {
+            ...enrollment.courseId,
+            progress: calculatedProgress
+          };
+        });
         setEnrolledCourses(courses);
       } catch (err) {
         console.error('Failed to fetch enrolled courses:', err);
@@ -178,7 +192,7 @@ export default function StudentDashboard() {
             ) : applications.length === 0 ? (
               <div className="bg-white dark:bg-[#111827] rounded-2xl p-10 text-center border border-gray-100 dark:border-gray-800">
                 <p className="text-gray-500 dark:text-gray-400 text-lg">No applications received yet.</p>
-                <p className="text-gray-400 dark:text-gray-500 text-sm mt-2">Post a tuition job to receive applications from tutors.</p>
+                <p className="text-gray-400 dark:text-gray-500 text-sm mt-2">Post a tuition job to receive applications from students.</p>
               </div>
             ) : (
               <div className="bg-white dark:bg-[#111827] rounded-2xl shadow-sm border border-gray-100 dark:border-gray-800 overflow-hidden">
@@ -186,7 +200,7 @@ export default function StudentDashboard() {
                   <thead className="bg-gray-50 dark:bg-gray-900 text-gray-600 dark:text-gray-400 border-b border-gray-200 dark:border-gray-700">
                     <tr>
                       <th className="p-4 font-semibold">Tuition Post</th>
-                      <th className="p-4 font-semibold">Tutor</th>
+                      <th className="p-4 font-semibold">Student</th>
                       <th className="p-4 font-semibold">Status</th>
                       <th className="p-4 font-semibold">Applied On</th>
                       <th className="p-4 font-semibold text-right">Action</th>
@@ -198,11 +212,11 @@ export default function StudentDashboard() {
                         <td className="p-4 font-medium text-gray-900 dark:text-white">{app.postId?.title || 'Unknown Post'}</td>
                         <td className="p-4 text-gray-600 dark:text-gray-300">
                           {app.tutorId?._id ? (
-                            <Link to={`/instructor/${app.tutorId._id}`} className="text-blue-600 dark:text-blue-400 font-semibold hover:underline">
-                              {app.tutorId?.name || 'Unknown Tutor'}
+                            <Link to={`/user/${app.tutorId._id}`} className="text-blue-600 dark:text-blue-400 font-semibold hover:underline">
+                              {app.tutorId?.name || 'Unknown Student'}
                             </Link>
                           ) : (
-                            app.tutorId?.name || 'Unknown Tutor'
+                            <span className="text-gray-500">Unknown Student</span>
                           )}
                         </td>
                         <td className="p-4">
@@ -269,22 +283,27 @@ export default function StudentDashboard() {
                 <p className="text-sm text-blue-100 mb-6">Use tokens to post in the Tuition Hub or buy specialized courses.</p>
                 <button 
                   onClick={async () => {
-                    const amount = window.prompt("How many tokens would you like to buy? (1 Token = 1 Taka)", "100");
+                    const amount = window.prompt("How many tokens would you like to buy? (1 Token = 100 BDT)", "1");
                     if (!amount || isNaN(amount)) return;
                     
                     try {
-                        const res = await axios.post(`http://localhost:5000/api/wallet/buy-tokens`, {
+                        // Backend expects the amount in BDT (1 Token = 100 BDT)
+                        const totalBdt = Number(amount) * 100;
+
+                        const res = await axios.post(`http://localhost:5000/api/wallet/buy`, {
                             userId: user._id || user.id,
-                            amount: Number(amount)
+                            amount: totalBdt,
+                            name: user.name,
+                            email: user.email
                         });
                         
                         if (res.data.paymentUrl) {
                             window.location.href = res.data.paymentUrl;
                         } else {
-                            alert('SSL Commerz payment URL not received yet. Teammate might still be working on it!');
+                            alert('SSL Commerz failed to generate payment URL.');
                         }
                     } catch (err) {
-                        alert('Failed to initiate payment. SSL Commerz integration might be pending.');
+                        alert(err.response?.data?.message || 'Failed to initiate payment.');
                     }
                   }}
                   className="bg-white text-blue-600 px-5 py-2 rounded-xl font-bold text-sm hover:bg-gray-50 transition-colors w-full shadow-sm"

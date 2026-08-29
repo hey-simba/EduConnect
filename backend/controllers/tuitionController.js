@@ -70,6 +70,11 @@ const createTuition = async (req, res) => {
             throw new Error('Student account not found');
         }
 
+        
+        if (student.tokens < 1) {
+            throw new Error('Insufficient tokens. Posting a tuition job costs 1 Token.');
+        }
+
         const newPost = new TuitionPost({
             studentId: fallbackStudentId,
             title,
@@ -86,6 +91,10 @@ const createTuition = async (req, res) => {
         });
 
         const savedPost = await newPost.save({ session });
+
+        // Deduct 1 token from the student
+        student.tokens -= 1;
+        await student.save({ session });
 
         await session.commitTransaction();
         session.endSession();

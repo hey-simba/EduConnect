@@ -11,6 +11,7 @@ import AdminDashboard from './pages/AdminDashboard';
 import Messages from './pages/Messages'; // <-- Real-Time Messaging
 import LiveClasses from './pages/LiveClasses'; // <-- Live Classes
 import InstructorProfile from './pages/InstructorProfile'; // <-- Instructor Profile
+import UserProfile from './pages/UserProfile'; // <-- User Profile
 
 // Import your global Header and Footer (adjust the path if they are saved elsewhere!)
 import Header from './components/Header'; 
@@ -51,6 +52,7 @@ function App() {
           <Route path="/messages" element={<Messages />} /> {/* <-- Real-Time Messaging */}
           <Route path="/live-classes" element={<LiveClasses />} /> {/* <-- Live Classes */}
           <Route path="/instructor/:id" element={<InstructorProfile />} /> {/* <-- Instructor Profile */}
+          <Route path="/user/:id" element={<UserProfile />} /> {/* <-- User Profile */}
         </Route>
       </Routes>
     </BrowserRouter>

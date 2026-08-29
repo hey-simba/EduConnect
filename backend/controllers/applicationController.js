@@ -20,7 +20,7 @@ const applyForTuition = async (req, res) => {
     try {
         const tutor = await User.findById(tutorId).session(session);
         if (!tutor) {
-            throw new Error('Tutor not found');
+            throw new Error('Applicant not found');
         }
         if (tutor.role !== 'student') {
             throw new Error('Only students can apply to tuition jobs.');
@@ -32,6 +32,10 @@ const applyForTuition = async (req, res) => {
         const post = await TuitionPost.findById(postId).session(session);
         if (!post) {
             throw new Error('Tuition post not found');
+        }
+
+        if (post.studentId.toString() === tutorId) {
+            throw new Error('You cannot apply to your own tuition post.');
         }
 
         const existingApplication = await Application.findOne({ postId, tutorId }).session(session);
@@ -58,7 +62,7 @@ const applyForTuition = async (req, res) => {
             userId: post.studentId,
             type: 'NEW_APPLICANT',
             message: `${tutor.name} has applied to your post: ${post.title}`,
-            link: `/instructor/${tutorId}`
+            link: `/user/${tutorId}`
         });
         await initialMessage.save({ session });
 

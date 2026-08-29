@@ -1,6 +1,6 @@
 // src/services/tuitionService.js
 
-// Replace this with your actual backend base URL
+
 const API_BASE_URL = 'http://localhost:5000/api';
 
 export const fetchTuitionJobs = async (params = {}) => {

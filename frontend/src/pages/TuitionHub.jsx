@@ -68,7 +68,7 @@ export default function TuitionHub() {
                 setPosts([]);
             }
 
-            // Fetch token balance only for students (students apply to tutor and post jobs)
+            // Fetch token balance only for students (students apply to posts and need tokens)
             if (user.role === 'student') {
                 const tokenRes = await axios.get(`http://localhost:5000/api/wallet/tokens/${user._id || user.id}`);
                 if (tokenRes.data.tokens !== undefined) {
@@ -177,39 +177,43 @@ export default function TuitionHub() {
                     </div>
                 </div>
 
-                <div className="flex justify-between items-center pt-2">
-                    <div className="text-xs text-gray-400 font-medium">
-                        Posted by: <span className="font-bold">{post.studentName || 'Student'}</span>
-                    </div>
+                    <div className="flex justify-between items-center pt-2">
+                        <div className="text-xs text-gray-400 font-medium">
+                            Posted by: <span className="font-bold">{post.studentName || 'Student'}</span>
+                        </div>
 
-                    {user.role === 'student' ? (
-                        appliedPosts.includes(post._id) ? (
-                            <button 
-                                disabled
-                                className="bg-gray-100 dark:bg-gray-800 text-gray-500 dark:text-gray-400 font-bold text-sm px-6 py-2.5 rounded-xl shadow-inner cursor-not-allowed border border-gray-200 dark:border-gray-700 flex items-center gap-2"
-                            >
-                                <span className="text-green-500">✓</span> Already Applied
-                            </button>
+                        {(post.studentId === user._id || post.studentId === user.id) ? (
+                            <span className="text-xs font-bold text-gray-400 italic bg-gray-100 dark:bg-gray-800 px-3 py-1.5 rounded-lg">
+                                Your Post
+                            </span>
+                        ) : user.role === 'student' ? (
+                            appliedPosts.includes(post._id) ? (
+                                <button 
+                                    disabled
+                                    className="bg-gray-100 dark:bg-gray-800 text-gray-500 dark:text-gray-400 font-bold text-sm px-6 py-2.5 rounded-xl shadow-inner cursor-not-allowed border border-gray-200 dark:border-gray-700 flex items-center gap-2"
+                                >
+                                    <span className="text-green-500">✓</span> Already Applied
+                                </button>
+                            ) : (
+                                <button 
+                                    onClick={() => {
+                                        if (tokens < 1) {
+                                            setIsBuyTokensModalOpen(true);
+                                        } else {
+                                            setSelectedPostToApply(post);
+                                        }
+                                    }}
+                                    className="bg-purple-600 hover:bg-purple-700 text-white font-bold text-sm px-6 py-2.5 rounded-xl shadow-lg transition-all hover:scale-[1.02]"
+                                >
+                                    Apply
+                                </button>
+                            )
                         ) : (
-                            <button 
-                                onClick={() => {
-                                    if (tokens < 1) {
-                                        setIsBuyTokensModalOpen(true);
-                                    } else {
-                                        setSelectedPostToApply(post);
-                                    }
-                                }}
-                                className="bg-purple-600 hover:bg-purple-700 text-white font-bold text-sm px-6 py-2.5 rounded-xl shadow-lg transition-all hover:scale-[1.02]"
-                            >
-                                Apply as Tutor
-                            </button>
-                        )
-                    ) : (
-                        <span className="text-xs font-bold text-gray-400 italic bg-gray-100 dark:bg-gray-800 px-3 py-1.5 rounded-lg">
-                            Instructors cannot apply
-                        </span>
-                    )}
-                </div>
+                            <span className="text-xs font-bold text-gray-400 italic bg-gray-100 dark:bg-gray-800 px-3 py-1.5 rounded-lg">
+                                Students can apply
+                            </span>
+                        )}
+                    </div>
             </div>
         ));
     }
