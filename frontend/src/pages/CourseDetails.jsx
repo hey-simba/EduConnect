@@ -94,8 +94,8 @@ export default function CourseDetails() {
     };
 
     const handleVideoSelect = async (video) => {
-        if (!hasAccess) {
-            alert("Please purchase the course to watch videos.");
+        if (!hasAccess && !video.isPreview) {
+            alert("Please purchase the course to watch premium videos.");
             return;
         }
         
@@ -378,8 +378,8 @@ export default function CourseDetails() {
                                         className={`p-4 border-b border-gray-100 cursor-pointer transition-colors flex justify-between items-center hover:bg-gray-50`}
                                     >
                                         <div className="flex items-start">
-                                            <div className={`mt-1 mr-3 flex-shrink-0 text-sm ${!hasAccess ? 'text-gray-400' : isWatched ? 'text-green-500' : 'text-blue-600'}`}>
-                                                {!hasAccess ? '🔒' : isWatched ? '✅' : '▶️'}
+                                            <div className={`mt-1 mr-3 flex-shrink-0 text-sm ${!hasAccess && !video.isPreview ? 'text-gray-400' : isWatched ? 'text-green-500' : 'text-blue-600'}`}>
+                                                {!hasAccess && !video.isPreview ? '🔒' : isWatched ? '✅' : '▶️'}
                                             </div>
                                             <div>
                                                 <h4 className={`text-sm font-medium ${isWatched ? 'text-gray-500 line-through' : 'text-gray-800'}`}>

@@ -26,10 +26,16 @@ export default function StudentDashboard() {
         setLoading(true);
         const res = await axios.get(`http://localhost:5000/api/courses/enrollments/${user._id || user.id}`);
         // Map backend format to UI format
-        const courses = res.data.map(enrollment => ({
-          ...enrollment.courseId,
-          progress: 0 // Mock progress bar for now since video tracking isn't done
-        }));
+        const courses = res.data.map(enrollment => {
+          const totalVideos = enrollment.courseId?.videos?.length || 1;
+          const watched = enrollment.watchedVideos?.length || 0;
+          const calculatedProgress = Math.round((watched / totalVideos) * 100);
+
+          return {
+            ...enrollment.courseId,
+            progress: calculatedProgress
+          };
+        });
         setEnrolledCourses(courses);
       } catch (err) {
         console.error('Failed to fetch enrolled courses:', err);

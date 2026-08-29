@@ -63,12 +63,12 @@ export default function CreateTuitionModal({ isOpen, onClose, onPostCreated, use
                     <button onClick={onClose} className="text-gray-500 hover:text-gray-900 dark:hover:text-white font-bold text-lg">✕</button>
                 </div>
 
-                <div className="mb-4 flex items-center gap-3 bg-blue-50 dark:bg-blue-900/10 p-3 rounded-xl border border-blue-200 dark:border-blue-700/30">
-                    <span className="text-blue-500 text-xl">📝</span>
+                <div className="mb-4 flex items-center gap-3 bg-amber-50 dark:bg-amber-900/10 p-3 rounded-xl border border-amber-200 dark:border-amber-700/30">
+                    <span className="text-amber-500 text-xl">🪙</span>
                     <div>
-                        <div className="text-xs font-bold text-blue-800 dark:text-blue-400 uppercase">Posting is Free</div>
-                        <div className="text-sm font-extrabold text-blue-900 dark:text-blue-300">
-                            Students can post tuition requests without tokens.
+                        <div className="text-xs font-bold text-amber-800 dark:text-amber-400 uppercase">Posting Costs 1 Token</div>
+                        <div className="text-sm font-extrabold text-amber-900 dark:text-amber-300">
+                            You must have at least 1 token in your wallet to post.
                         </div>
                     </div>
                 </div>
