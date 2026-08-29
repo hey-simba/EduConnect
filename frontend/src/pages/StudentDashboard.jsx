@@ -178,7 +178,7 @@ export default function StudentDashboard() {
             ) : applications.length === 0 ? (
               <div className="bg-white dark:bg-[#111827] rounded-2xl p-10 text-center border border-gray-100 dark:border-gray-800">
                 <p className="text-gray-500 dark:text-gray-400 text-lg">No applications received yet.</p>
-                <p className="text-gray-400 dark:text-gray-500 text-sm mt-2">Post a tuition job to receive applications from tutors.</p>
+                <p className="text-gray-400 dark:text-gray-500 text-sm mt-2">Post a tuition job to receive applications from students.</p>
               </div>
             ) : (
               <div className="bg-white dark:bg-[#111827] rounded-2xl shadow-sm border border-gray-100 dark:border-gray-800 overflow-hidden">
@@ -186,7 +186,7 @@ export default function StudentDashboard() {
                   <thead className="bg-gray-50 dark:bg-gray-900 text-gray-600 dark:text-gray-400 border-b border-gray-200 dark:border-gray-700">
                     <tr>
                       <th className="p-4 font-semibold">Tuition Post</th>
-                      <th className="p-4 font-semibold">Tutor</th>
+                      <th className="p-4 font-semibold">Student</th>
                       <th className="p-4 font-semibold">Status</th>
                       <th className="p-4 font-semibold">Applied On</th>
                       <th className="p-4 font-semibold text-right">Action</th>
@@ -198,11 +198,11 @@ export default function StudentDashboard() {
                         <td className="p-4 font-medium text-gray-900 dark:text-white">{app.postId?.title || 'Unknown Post'}</td>
                         <td className="p-4 text-gray-600 dark:text-gray-300">
                           {app.tutorId?._id ? (
-                            <Link to={`/instructor/${app.tutorId._id}`} className="text-blue-600 dark:text-blue-400 font-semibold hover:underline">
-                              {app.tutorId?.name || 'Unknown Tutor'}
-                            </Link>
+                            <button onClick={() => handleMessageTutor(app.tutorId._id || app.tutorId)} className="text-blue-600 dark:text-blue-400 font-semibold hover:underline">
+                              {app.tutorId?.name || 'Unknown Student'}
+                            </button>
                           ) : (
-                            app.tutorId?.name || 'Unknown Tutor'
+                            <span className="text-gray-500">Unknown Student</span>
                           )}
                         </td>
                         <td className="p-4">

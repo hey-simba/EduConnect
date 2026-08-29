@@ -68,7 +68,7 @@ export default function TuitionHub() {
                 setPosts([]);
             }
 
-            // Fetch token balance only for students (students apply to tutor and post jobs)
+            // Fetch token balance only for students (students apply to posts and need tokens)
             if (user.role === 'student') {
                 const tokenRes = await axios.get(`http://localhost:5000/api/wallet/tokens/${user._id || user.id}`);
                 if (tokenRes.data.tokens !== undefined) {
@@ -201,12 +201,12 @@ export default function TuitionHub() {
                                 }}
                                 className="bg-purple-600 hover:bg-purple-700 text-white font-bold text-sm px-6 py-2.5 rounded-xl shadow-lg transition-all hover:scale-[1.02]"
                             >
-                                Apply as Tutor
+                                Apply
                             </button>
                         )
                     ) : (
                         <span className="text-xs font-bold text-gray-400 italic bg-gray-100 dark:bg-gray-800 px-3 py-1.5 rounded-lg">
-                            Instructors cannot apply
+                            Students can apply
                         </span>
                     )}
                 </div>
